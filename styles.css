@@ -1,0 +1,11 @@
+* {
+    margin: 0;
+}
+
+#navbar {
+    display: flex;
+}
+
+#main-page {
+    display: flex;
+}

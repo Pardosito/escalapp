@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Escalapp - Communities</title>
+</head>
+<body class="bg-gray-100" id="communitiesBody">
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">Communities</h1>
+            <div class="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input 
+                    type="text" 
+                    placeholder="Search communities..." 
+                    class="pl-9 pr-3 py-2 w-[250px] border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+            </div>
+        </div>
+
+        <div class="flex mb-6 space-x-2">
+            <button class="px-4 py-2 bg-blue-500 text-white rounded-md">All Communities</button>
+            <button class="px-4 py-2 bg-white border rounded-md text-gray-700">My Communities</button>
+            <button class="px-4 py-2 bg-white border rounded-md text-gray-700">Recommended</button>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Community Card 1 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="h-36 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&q=80&w=300')"></div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xl font-semibold">Boulder Buddies</h2>
+                        <span class="text-sm text-gray-500">3,821 members</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">A community for bouldering enthusiasts of all levels. Share beta, plan meetups, and celebrate sends together!</p>
+                    <button class="w-full py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Joined</button>
+                </div>
+            </div>
+
+            <!-- Community Card 2 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="h-36 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=300')"></div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xl font-semibold">Trad Climbers United</h2>
+                        <span class="text-sm text-gray-500">2,451 members</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">For climbers who love placing their own protection. Discussions on gear, techniques, and safety.</p>
+                    <button class="w-full py-2 bg-white border rounded-md hover:bg-gray-100">Join</button>
+                </div>
+            </div>
+
+            <!-- Community Card 3 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="h-36 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1615729947596-a598e5de0ab3?auto=format&fit=crop&q=80&w=300')"></div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xl font-semibold">Sport Climbing Squad</h2>
+                        <span class="text-sm text-gray-500">4,572 members</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">Dedicated to sport climbing, route setting, and clippin' bolts around the world.</p>
+                    <button class="w-full py-2 bg-white border rounded-md hover:bg-gray-100">Join</button>
+                </div>
+            </div>
+
+            <!-- Community Card 4 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="h-36 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&q=80&w=300')"></div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xl font-semibold">Alpine Adventurers</h2>
+                        <span class="text-sm text-gray-500">1,872 members</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">High altitude climbing and mountaineering. Share expedition stories and tips for alpine pursuits.</p>
+                    <button class="w-full py-2 bg-white border rounded-md hover:bg-gray-100">Join</button>
+                </div>
+            </div>
+
+            <!-- Community Card 5 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="h-36 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=300')"></div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xl font-semibold">Ice Climbers Network</h2>
+                        <span class="text-sm text-gray-500">942 members</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">For those who love climbing frozen waterfalls and tackling winter terrain.</p>
+                    <button class="w-full py-2 bg-white border rounded-md hover:bg-gray-100">Join</button>
+                </div>
+            </div>
+
+            <!-- Community Card 6 -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="h-36 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1615729947596-a598e5de0ab3?auto=format&fit=crop&q=80&w=300')"></div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-xl font-semibold">Training & Technique</h2>
+                        <span class="text-sm text-gray-500">6,381 members</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">Focus on training methods, technique improvements, and pushing your climbing to the next level.</p>
+                    <button class="w-full py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Joined</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
