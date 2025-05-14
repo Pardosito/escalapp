@@ -3,7 +3,7 @@ async function switchViews(view) {
 
     switch (view) {
         case "challenges":
-            await fetch("./challenges.html")
+            await fetch("challenges.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -18,7 +18,7 @@ async function switchViews(view) {
             break;
     
         case "communities":
-            await fetch("./communities.html")
+            await fetch("communities.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
