@@ -62,17 +62,17 @@ export const registerUser = async (req, res) => {
   }
 };
 
-
 export const loginUser = async (req, res) => {
   try {
-    
-    const { identifier, password } = req.body;
+    const identifier = req.query.emailOrUsername;
+    const password = req.query.password;
 
     if (!identifier || !password) {
        return res.status(400).json({ message: 'Missing required fields (identifier, password).' });
     }
     const db = getDatabase();
     const usersCollection = db.collection(USERSCOLLECTION);
+    const refreshTokensCollection = db.collection('refreshTokens');
 
     const user = await usersCollection.findOne({
       $or: [
@@ -96,15 +96,21 @@ export const loginUser = async (req, res) => {
       username: user.username
     };
 
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+    if (!JWTSECRET) {
+        console.error("JWTSECRET is not defined in loginUser function scope.");
+         return res.status(500).json({ message: 'Server configuration error.' });
+    }
+
+    const token = jwt.sign(payload, JWTSECRET, { expiresIn: '1h' });
     const cookieOptions = {
         httpOnly: true,
         maxAge: 3600 * 1000,
-        sameSite: 'Lax',  
+        sameSite: 'Lax',
         path: '/'
     }
     res.cookie('token', token, cookieOptions);
-    const refreshTokenExpiresInSeconds = 7 * 24 * 60 * 60; // Refresh Token expira en 7 días
+
+    const refreshTokenExpiresInSeconds = 7 * 24 * 60 * 60;
     const refreshToken = crypto.randomBytes(32).toString('hex');
 
     const refreshTokenDocument = {
@@ -114,10 +120,14 @@ export const loginUser = async (req, res) => {
         expiresAt: new Date(Date.now() + refreshTokenExpiresInSeconds * 1000)
     };
 
+    if (!refreshTokensCollection) {
+         console.error("refreshTokensCollection is not defined in loginUser function scope.");
+          return res.status(500).json({ message: 'Server configuration error (refresh tokens).' });
+    }
+
     await refreshTokensCollection.deleteMany({ userId: user._id, expiresAt: { $lt: new Date() } });
     await refreshTokensCollection.insertOne(refreshTokenDocument);
 
-    
     const refreshTokenCookieOptions = {
       httpOnly: true,
       maxAge: refreshTokenExpiresInSeconds * 1000,
@@ -138,6 +148,8 @@ export const loginUser = async (req, res) => {
      res.status(500).json({ message: 'Internal server error during login.' });
   }
 };
+
+
 export const refreshToken = async (req, res) => {
   try {
       const db = getDatabase();
@@ -230,4 +242,36 @@ export const verifyJWT = (req, res, next) => {
         req.user = decoded;
         next();
     });
+};
+
+export const logoutUser = async (req, res) => {
+  try {
+      const db = getDatabase();
+      const refreshTokensCollection = db.collection(REFRESHTOKENSCOLLECTION);
+
+      const { refreshToken } = req.cookies;
+
+      if (!refreshToken) {
+          res.clearCookie('token', { path: '/' });
+          res.clearCookie('refreshToken', { path: '/login/refresh' });
+          return res.status(200).json({ message: 'Logout successful (no token found).' });
+      }
+
+      const deleteResult = await refreshTokensCollection.deleteOne({ token: refreshToken });
+
+      if (deleteResult.deletedCount === 0) {
+           console.warn('Attempted to log out with refresh token not found in DB:', refreshToken);
+      } else {
+           console.log('Refresh token successfully deleted from DB.');
+      }
+
+      res.clearCookie('token', { path: '/' });
+      res.clearCookie('refreshToken', { path: '/login/refresh' });
+
+      res.status(200).json({ message: 'Logout successful.' });
+
+  } catch (error) {
+      console.error('Error in logoutUser:', error);
+      res.status(500).json({ message: 'Internal server error during logout.' });
+  }
 };

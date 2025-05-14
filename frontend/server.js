@@ -4,36 +4,29 @@ const fs = require('fs');
 const app = express();
 const PORT = 8080;
 
-// Enable logging to see incoming requests
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   next();
 });
 
-// Serve static files from the project root
 app.use(express.static(__dirname));
 
-// Handle HTML file requests - checks both root and html/ folder
 app.get('/:page.html', (req, res, next) => {
   const pageName = req.params.page + '.html';
   const rootPath = path.join(__dirname, pageName);
   const htmlFolderPath = path.join(__dirname, 'html', pageName);
   
-  // First check if file exists in root directory
   if (fs.existsSync(rootPath)) {
     res.sendFile(rootPath);
   } 
-  // Then check if it exists in /html folder
   else if (fs.existsSync(htmlFolderPath)) {
     res.sendFile(htmlFolderPath);
   }
-  // Otherwise pass to next handler (which will likely 404)
   else {
     next();
   }
 });
 
-// Main route - check both locations for index.html
 app.get('/', (req, res) => {
   const rootIndexPath = path.join(__dirname, 'index.html');
   const htmlFolderIndexPath = path.join(__dirname, 'html', 'index.html');
@@ -49,7 +42,6 @@ app.get('/', (req, res) => {
   }
 });
 
-// 404 handler with detailed message
 app.use((req, res) => {
   console.log(`404 - File not found: ${req.url}`);
   res.status(404).send(`
@@ -74,7 +66,6 @@ app.use((req, res) => {
   `);
 });
 
-// Start the server with error handling
 app.listen(PORT, () => {
   console.log(`Escalapp frontend server running on http://localhost:${PORT}`);
   console.log(`Project directory: ${__dirname}`);
