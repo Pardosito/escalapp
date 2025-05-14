@@ -33,7 +33,7 @@ async function switchViews(view) {
             break;
         
         case "profile":
-            await fetch("./profile.html")
+            await fetch("profile.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -48,7 +48,7 @@ async function switchViews(view) {
             break;
         
         case "routes":
-            await fetch("./routes.html")
+            await fetch("routes.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -63,7 +63,7 @@ async function switchViews(view) {
             break;
         
         case "settings":
-            await fetch("./settings.html")
+            await fetch("settings.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -78,7 +78,7 @@ async function switchViews(view) {
             break;
         
         case "home":
-            await fetch("./index.html")
+            await fetch("index.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -93,7 +93,7 @@ async function switchViews(view) {
             break;
 
         case "explore":
-            await fetch("./explore.html")
+            await fetch("explore.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -111,7 +111,7 @@ async function switchViews(view) {
             let profileFeed = document.getElementById("profileFeed");
             profileFeed.classList.remove('grid', 'md:grid-cols-3');
 
-            await fetch("./ascents.html")
+            await fetch("ascents.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -128,7 +128,7 @@ async function switchViews(view) {
         case "saved":
             let routesFeed = document.getElementById("profileFeed");
 
-            await fetch("./savedRoutes.html")
+            await fetch("savedRoutes.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -143,7 +143,7 @@ async function switchViews(view) {
             break;
         
         case "post":
-            await fetch("./postRoute.html")
+            await fetch("postRoute.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -158,7 +158,7 @@ async function switchViews(view) {
             break;
 
         case "singleRoute":
-            await fetch("./singleRoute.html")
+            await fetch("singleRoute.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -175,7 +175,7 @@ async function switchViews(view) {
         case "userPosts":
             let userFeed1 = document.getElementById("userFeed");
 
-            await fetch("./userPosts.html")
+            await fetch("userPosts.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -192,7 +192,7 @@ async function switchViews(view) {
         case "userRoutes":
             let userFeed = document.getElementById("userFeed");
 
-            await fetch("./userRoutes.html")
+            await fetch("userRoutes.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();
@@ -207,7 +207,7 @@ async function switchViews(view) {
             break;
 
         case "singleCom":
-            await fetch("./singleCommunity.html")
+            await fetch("singleCommunity.html")
             .then(response => response.text())
             .then(data => {
                 const parser = new DOMParser();

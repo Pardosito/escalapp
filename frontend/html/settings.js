@@ -11,11 +11,7 @@ function switchTab(tabValue) {
             document.querySelector(`[data-tab-trigger="${tabValue}"]`).classList.add('bg-blue-500', 'text-white');
         }
 
-        function toggleDeleteDialog() {
-            const dialog = document.getElementById('delete-dialog');
-            dialog.classList.toggle('hidden');
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            switchTab('account');
-        });
+function toggleDeleteDialog() {
+    const dialog = document.getElementById('delete-dialog');
+    dialog.classList.toggle('hidden');
+}
