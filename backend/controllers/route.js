@@ -406,3 +406,127 @@ export const getLikedRoutes = async (req, res) => {
         res.status(500).json({ message: 'Internal server error fetching liked routes.' });
     }
 };
+
+const EDITABLE_ROUTE_FIELDS = [
+    'title',
+    'description',
+    'difficultyLevel',
+    'geoLocation',
+    'accessCost',
+    'climbType',
+    'recommendedGear',
+];
+
+const updateRouteDB = async (routeId, updateOperators) => {
+    try {
+        const db = getDatabase();
+        const routesCollection = db.collection(ROUTES_COLLECTION);
+
+        const objectId = new ObjectId(routeId);
+
+        const result = await routesCollection.updateOne(
+            { _id: objectId },
+            updateOperators
+        );
+
+        return result.modifiedCount;
+
+    } catch (error) {
+        console.error('Error in updateRouteDB:', error);
+        throw error;
+    }
+};
+
+export const updateRoute = async (req, res) => {
+    try {
+        const routeId = req.params.id;
+
+        if (!ObjectId.isValid(routeId)) {
+            return res.status(400).json({ message: 'Invalid route ID format.' });
+        }
+
+        const authenticatedUserId = req.user.userId;
+
+        const routeToUpdate = await findRouteByIdDB(routeId);
+
+        if (!routeToUpdate) {
+            return res.status(404).json({ message: 'Route not found.' });
+        }
+
+        if (routeToUpdate.creatorId.toString() !== new ObjectId(authenticatedUserId).toString()) {
+            return res.status(403).json({ message: 'Forbidden: Only the creator can edit this route.' });
+        }
+
+        const updateOperators = {};
+        const setOperator = {};
+        const pullOperator = {};
+        const pushOperator = {};
+
+        for (const field of EDITABLE_ROUTE_FIELDS) {
+            if (req.body[field] !== undefined) {
+                setOperator[field] = req.body[field];
+            }
+        }
+
+        const filesToDelete = Array.isArray(req.body.filesToDelete) ? req.body.filesToDelete : [];
+        if (filesToDelete.length > 0) {
+             pullOperator.images = { $in: filesToDelete };
+             pullOperator.videos = { $in: filesToDelete };
+        }
+
+
+        const uploadedImagesInfo = req.files && req.files.images ? req.files.images : [];
+        const uploadedVideosInfo = req.files && req.files.videos ? req.files.videos : [];
+
+        const imageUrls = uploadedImagesInfo.map(fileInfo => fileInfo.path || fileInfo.location).filter(Boolean);
+        const videoUrls = uploadedVideosInfo.map(fileInfo => fileInfo.path || fileInfo.location).filter(Boolean);
+
+        if (newImageUrls.length > 0) {
+             pushOperator.images = { $each: newImageUrls };
+        }
+        if (newVideoUrls.length > 0) {
+             pushOperator.videos = { $each: newVideoUrls };
+        }
+
+        setOperator.lastUpdated = new Date();
+
+
+        if (Object.keys(setOperator).length > 0) {
+            updateOperators.$set = setOperator;
+        }
+        if (Object.keys(pullOperator).length > 0) {
+            updateOperators.$pull = pullOperator;
+        }
+        if (Object.keys(pushOperator).length > 0) {
+            updateOperators.$push = pushOperator;
+        }
+
+        if (Object.keys(updateOperators).length === 0) {
+             return res.status(200).json({ message: 'No updatable fields provided.' });
+        }
+
+        if (filesToDelete.length > 0) {
+            filesToDelete.forEach(filePath => {
+                 fs.promises.unlink(filePath).catch(err => {
+                     console.error('Error deleting old file:', filePath, err);
+                 });
+            });
+        }
+
+        const modifiedCount = await updateRouteDB(routeId, updateOperators);
+
+        if (modifiedCount === 1) {
+            res.status(200).json({ message: 'Route updated successfully.' });
+        } else if (modifiedCount === 0) {
+             res.status(200).json({ message: 'Route found, but no changes were made.' });
+        }
+        else {
+             console.error('Route update in DB resulted in unexpected modifiedCount:', modifiedCount, 'for route ID:', routeId);
+             res.status(500).json({ message: 'Route update failed in database.' });
+        }
+
+    } catch (error) {
+        console.error('Error in updateRoute controller:', error);
+        res.status(500).json({ message: 'Internal server error during route update.' });
+    }
+};
