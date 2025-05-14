@@ -6,6 +6,7 @@
     <title>ClimbConnect Settings</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="settings.js"></script>
+    <link rel="icon" type="image/png" href="./Mountains Sun Icon.svg">
 </head>
 <body class="bg-background text-foreground" id="settingsBody">
     <div class="container max-w-4xl mx-auto py-8 px-4">
@@ -17,7 +18,7 @@
         <div class="w-full">
             <!-- Tabs Navigation -->
             <div class="grid grid-cols-3 bg-secondary rounded-md p-1 mb-8">
-                <button data-tab-trigger="account" onclick="switchTab('account')" class="py-2 px-4 rounded-md transition-colors">
+                <button data-tab-trigger="account" onclick="switchTab('account')" class="py-2 px-4 rounded-md transition-colors bg-blue-500 text-white">
                     Account
                 </button>
                 <button data-tab-trigger="notifications" onclick="switchTab('notifications')" class="py-2 px-4 rounded-md transition-colors">
@@ -60,6 +61,16 @@
                     </p>
                     <button onclick="toggleDeleteDialog()" class="px-4 py-2 rounded-md transition-colors bg-red-500 text-white hover:bg-red-600">
                         Delete Account
+                    </button>
+                </div>
+
+                <div class="bg-card p-6 rounded-lg border shadow-sm">
+                    <h3 class="text-xl font-semibold text-destructive mb-4">Log Out</h3>
+                    <p class="text-sm text-muted-foreground mb-6">
+                        You'll have to re-enter your credentials if you decide to log out.
+                    </p>
+                    <button class="px-4 py-2 rounded-md transition-colors bg-red-500 text-white hover:bg-red-600">
+                        <a href="login.html">Log Out</a>
                     </button>
                 </div>
             </div>

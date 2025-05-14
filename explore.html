@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./script.js"></script>
+    <script src="settings.js"></script>
+    <title>Escalapp</title>
+</head>
+<body>
+    <div class="flex-grow p-6 overflow-y-auto" id="exploreFeed">
+            <div class="max-w-4xl mx-auto" id="homeBody">
+
+                <div class="flex mb-6">
+                    <button data-tab-trigger="home" class="flex-1 py-2 px-4 bg-white text-gray-500" onclick="switchViews('home')">My Feed</button>
+                    <button data-tab-trigger="explore" class="flex-1 py-2 px-4 bg-white border-b-2 border-blue-500 text-blue-500" onclick="switchViews('explore')">Explore</button>
+                </div>
+
+                <!--Publicacion-->
+                <div class="bg-white rounded-lg shadow-md mb-6">
+                    <textarea 
+                        placeholder="Share your climbing experience..." 
+                        class="w-full p-4 rounded-t-lg resize-none focus:outline-none"
+                    ></textarea>
+                    <div class="flex justify-between p-4 border-t">
+                        <div>
+                            <button class="mr-2 px-3 py-1 border rounded-md hover:bg-gray-100">📷 Photo</button>
+                            <button class="px-3 py-1 border rounded-md hover:bg-gray-100">📍 Location</button>
+                        </div>
+                        <button class="bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600">Post</button>
+                    </div>
+                </div>
+
+                <!--Feed-->
+                <div class="space-y-6">
+
+                    <div class="bg-white rounded-lg shadow-md">
+                        <div class="p-4">
+                            <div class="flex items-center mb-4">
+                                <img 
+                                    src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100" 
+                                    alt="Marcus Chen" 
+                                    class="w-10 h-10 rounded-full mr-3"
+                                >
+                                <div>
+                                    <h3 class="font-semibold">Marcus Chen</h3>
+                                    <p class="text-gray-500 text-sm">45 minutes ago</p>
+                                </div>
+                            </div>
+                            <p class="mb-4">Finally conquered that overhanging route at Maple Canyon! Been working on this one for weeks. The dynamic move to the pocket hold nearly broke me, but persistence pays off! Anyone else climbing in Utah this month? #SendDay</p>
+                            <img 
+                                src="https://images.unsplash.com/photo-1522163182402-834f871fd851?auto=format&fit=crop&q=80&w=600" 
+                                alt="Climbing Route" 
+                                class="w-full rounded-lg mb-4"
+                            >
+                            <div class="flex justify-between text-gray-600">
+                                <div>Difficulty: 5.11d | Sport Climbing</div>
+                                <div>
+                                    <span>❤️ 187</span>
+                                    <span class="ml-3">💬 42</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="bg-white rounded-lg shadow-md">
+                        <div class="p-4">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 rounded-full bg-gray-300 mr-3 flex items-center justify-center">
+                                    EL
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold">Emma Liu</h3>
+                                    <p class="text-gray-500 text-sm">Yesterday at 3:15 PM</p>
+                                </div>
+                            </div>
+                            <p class="mb-4">Perfect conditions at Bishop today! Spent the morning on the Buttermilks classics. 'Ironman Traverse' almost got the best of me but stuck that heel hook on the third try. Who's heading there this weekend for the bouldering festival?</p>
+                            <img 
+                                src="https://images.unsplash.com/photo-1503341733017-1901578f9f1e?auto=format&fit=crop&q=80&w=600" 
+                                alt="Bishop Bouldering" 
+                                class="w-full rounded-lg mb-4"
+                            >
+                            <div class="flex justify-between text-gray-600">
+                                <div>Difficulty: V6 | Bouldering</div>
+                                <div>
+                                    <span>❤️ 203</span>
+                                    <span class="ml-3">💬 31</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</body>
+</html>

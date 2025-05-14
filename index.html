@@ -5,52 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="./script.js"></script>
-    <script src="settings.js"></script>
+    <script src="./settings.js"></script>
     <title>Escalapp - Climbing Social Network</title>
+    <link rel="icon" type="image/png" href="./Mountains Sun Icon.svg">
 </head>
 <body class="bg-gray-100 overflow-hidden">
     <div class="flex h-screen">
         <!-- Sidebar-->
-        <div class="bg-white w-64 h-screen border-r p-4 h-full">
+        <div class="bg-white w-96 h-screen border-r p-4 h-full">
             <h1 class="text-2xl font-bold mb-8 text-center">Escalapp</h1>
             <nav>
                 <ul class="space-y-2">
-                    <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer">
+                    <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer" onclick="switchViews('home')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
-                        <span><button onclick="switchViews('home')">Home</button></span>
+                        <span>Home</span>
                     </li>
-                    <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer">
+                    <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer" onclick="switchViews('communities')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <span><button onclick="switchViews('communities')">Communities</button></span>
+                        <span>Communities</span>
                     </li>
-                    <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer">
+                    <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer" onclick="switchViews('routes')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        <span><button onclick="switchViews('routes')">Routes</button></span>
+                        <span>Routes</span>
                     </li>
-                    <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer">
+                    <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer" onclick="switchViews('challenges')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span><button onclick="switchViews('challenges')">Challenges</button></span>
+                        <span>Challenges</span>
                     </li>
-                    <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer">
+                    <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer" onclick="switchViews('settings')">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
                         <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
                         <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
                      </svg>
-                      <span><button onclick="switchViews('settings')">Settings</button></span>
-                      <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer">
+                      <span>Settings</span>
+                      <li class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer" onclick="switchViews('profile')">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
                           <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
                           <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
                       </svg>
-                        <span><button onclick="switchViews('profile')">Profile</button></span>
+                        <span>Profile</span>
                     </li>
                   </li>
                 </ul>
@@ -60,6 +61,11 @@
         <!--Area principal-->
         <div class="flex-grow p-6 overflow-y-auto" id="mainDiv">
             <div class="max-w-4xl mx-auto" id="homeBody">
+
+                <div class="flex mb-6">
+                    <button data-tab-trigger="home" class="flex-1 py-2 px-4 bg-white border-b-2 border-blue-500 text-blue-500" onclick="switchViews('home')">My Feed</button>
+                    <button data-tab-trigger="explore" class="flex-1 py-2 px-4 bg-white text-gray-500" onclick="switchViews('explore')">Explore</button>
+                </div>
 
                 <!--Publicacion-->
                 <div class="bg-white rounded-lg shadow-md mb-6">

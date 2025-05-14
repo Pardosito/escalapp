@@ -4,39 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Escalapp</title>
+    <link rel="icon" type="image/png" href="./Mountains Sun Icon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body id="challengesBody">
-    <div class="mt-6 bg-white rounded-lg shadow-md">
-        <div class="p-4 border-b">
-            <h2 class="text-xl font-semibold">Active Challenges</h2>
-        </div>
-        <div class="p-4 space-y-4">
-
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="font-semibold">Weekend Warrior</h3>
-                    <p class="text-gray-500 text-sm">Climb 5 different routes at your local crag this weekend</p>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 60%"></div>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">349 participants</p>
-                </div>
-                <button class="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600">Joined</button>
+<body class="bg-white text-gray-900" id="challengesBody">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <h1 class="text-2xl font-bold">Active Challenges</h1>
+      </div>
+  
+  
+      <div class="flex space-x-2 mb-6 overflow-x-auto">
+        <button class="px-4 py-2 bg-blue-600 text-white rounded-md">All Challenges</button>
+        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md">Community Challenges</button>
+        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md">App Challenges</button>
+      </div>
+  
+  
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  
+        <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden h-full">
+          <div class="p-4">
+            <div class="flex justify-between items-center mb-2">
+              <h2 class="text-xl font-semibold">Climb two V5 in a single week</h2>
+              <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded">V5</span>
             </div>
-            
-
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="font-semibold">Crack Climbing Month</h3>
-                    <p class="text-gray-500 text-sm">Complete 10 crack climbs of varying difficulties</p>
-                    <p class="text-xs text-gray-500 mt-2">1,289 participants</p>
-                </div>
-                <button class="px-3 py-1 border rounded-md hover:bg-gray-100">Join</button>
+            <div class="flex items-center text-sm text-gray-600 mb-2">
+              <i class="lucide lucide-map-pin mr-2"></i>
+              Guadalajara, MX
             </div>
+            <p class="text-gray-700 mb-4">A challenging boulder problem with complex moves and minimal holds.</p>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center">
+                <span class="text-yellow-500 mr-1">★</span>
+                <span class="text-gray-600">98 have completed</span>
+              </div>
+              <div class="flex space-x-1">
+                <span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">Community</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="p-4 border-t">
-            <button class="w-full py-2 border rounded-md hover:bg-gray-100">Find More Challenges</button>
-        </div>
+      
+        <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden h-full">
+            <div class="p-4">
+              <div class="flex justify-between items-center mb-2">
+                <h2 class="text-xl font-semibold">Make a First Ascent</h2>
+                <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded">V7</span>
+              </div>
+              <div class="flex items-center text-sm text-gray-600 mb-2">
+                <i class="lucide lucide-map-pin mr-2"></i>
+                Monterrey, MX
+              </div>
+              <p class="text-gray-700 mb-4">A challenging boulder problem with complex moves and minimal holds.</p>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                  <span class="text-yellow-500 mr-1">★</span>
+                  <span class="text-gray-600">12 have completed</span>
+                </div>
+                <div class="flex space-x-1">
+                  <span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">App</span>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+      
+          <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden h-full">
+            <div class="p-4">
+              <div class="flex justify-between items-center mb-2">
+                <h2 class="text-xl font-semibold">Climb a 5.10 route</h2>
+                <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded">V5</span>
+              </div>
+              <div class="flex items-center text-sm text-gray-600 mb-2">
+                <i class="lucide lucide-map-pin mr-2"></i>
+                Guadalajara, MX
+              </div>
+              <p class="text-gray-700 mb-4">A challenging boulder problem with complex moves and minimal holds.</p>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                  <span class="text-yellow-500 mr-1">★</span>
+                  <span class="text-gray-600">114 have completed</span>
+                </div>
+                <div class="flex space-x-1">
+                  <span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">Community</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        
+      </div>
     </div>
-</body>
+  </body>
 </html>

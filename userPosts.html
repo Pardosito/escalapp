@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escalapp</title>
+</head>
+<body>
+    <div class="md:col-span-2" id="userPosts">
+        <div class="flex border-b mb-6">
+            <button onclick="switchViews('userPosts')" class="flex-1 py-3 border-b-2 border-blue-500 text-blue-600 font-semibold ">Posts</button>
+            <button onclick="switchViews('userRoutes')" class="flex-1 py-3 text-gray-600">Routes</button>
+        </div>
+        
+        <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden mb-4">
+            <img src="https://images.unsplash.com/photo-1482938289607-e9573fc25ebb?auto=format&fit=crop&q=80&w=600" 
+                 alt="Climbing Route" 
+                 class="w-full h-48 object-cover">
+            
+            <div class="p-4">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center">
+                  <img 
+                    src="https://images.unsplash.com/photo-1615729947596-a598e5de0ab3?auto=format&fit=crop&q=80&w=100" 
+                    alt="Alex Honnold" 
+                    class="w-10 h-10 rounded-full mr-3">
+                  <div>
+                    <h3 class="font-semibold text-sm">Alex Honnold</h3>
+                    <p class="text-gray-500 text-xs">2 hours ago</p>
+                  </div>
+                </div>
+                <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded">5.12a</span>
+              </div>
+          
+              <p class="text-gray-700 text-sm mb-4">
+                Just sent my project at Red River Gorge! This route has been on my list for months. The crux move is absolutely wild - had to use a heel hook on a tiny crimp. Feeling accomplished! 💪🧗‍♂️
+              </p>
+          
+              <div class="flex justify-between text-sm text-gray-600">
+                <span>Sport Climbing</span>
+                <div>
+                  <span>❤️ 245</span>
+                  <span class="ml-3">💬 32</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+    </div>
+</body>
+</html>
