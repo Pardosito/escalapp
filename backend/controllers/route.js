@@ -1,8 +1,17 @@
 import { getDatabase } from './configdb.js';
 import { ObjectId } from 'mongodb';
 import { Route } from '../models/Route.js';
-const imagesBaseDir = path.join(process.cwd(), 'images');
-const videosBaseDir = path.join(process.cwd(), 'videos');
+
+
+import fs from 'fs'; // Ya deberías tenerlo importado
+import path from 'path'; // Ya deberías tenerlo importado
+import { fileURLToPath } from 'url'; // Añadir si usas módulos ES (.mjs o "type": "module")
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const imagesBaseDir = path.join(__dirname, '..', 'images'); // '..' porque controllers está en un subdirectorio
+const videosBaseDir = path.join(__dirname, '..', 'videos'); // '..' porque controllers está en un subdirectorio
+
+
 const ROUTES_COLLECTION = 'routes';
 const findRoutes = async (query = {}, options = {}) => {
   try {
