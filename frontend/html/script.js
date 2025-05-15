@@ -78,10 +78,10 @@ async function switchViews(view, id = null) {
             targetElementId = "postBody";
             initializationFunction = initializePostRouteView;
             break;
-        case "singleCom":
-            htmlFileName = "singleCommunity.html";
-            targetElementId = "singleCommunityBody";
-            // initializationFunction = initializeSingleCommunityView; // Create this function if needed
+        case 'singleCommunity': // Case for viewing a single community
+            htmlFileName = 'singleCommunity.html'; // Use singleCommunity.html
+            targetElementId = 'singleCommunityBody'; // <-- Use the ID in singleCommunity.html
+            // Note: initializeSingleCommunityView will use the 'id' parameter (community ID)
             break;
 
 
@@ -155,32 +155,24 @@ async function fetchAndInjectPartial(htmlFileName, targetElementId, targetContai
 }
 
 
-
 function initializeHomeView() {
     console.log("Initializing Home View...");
+    const postsContainer = document.getElementById('postsFeedContainer');
+    const postCreationArea = document.getElementById('postCreationArea');
 
-    const postsContainer = document.getElementById('postsFeedContainer'); // Div that holds the real posts
-    const postCreationArea = document.getElementById('postsFeedContainer'); // The whole post creation form area
+    if (!postsContainer) {
+         console.error("Posts feed container (#postsFeedContainer) not found in Home View!");
+         return;
+    }
 
-    const postTextarea = postCreationArea ? postCreationArea.querySelector('textarea#postContent') : null; // Textarea for content
-    const postPhotoButton = postCreationArea ? postCreationArea.querySelector('label#postPhotoButton') : null; // Label for file input
-    const postImageUploadInput = postCreationArea ? postCreationArea.querySelector('input#postImageUpload') : null; // Hidden file input
-    const postImagePreview = postCreationArea ? postCreationArea.querySelector('img#postImagePreview') : null; // Image preview element
-    const postFileSelectedName = postCreationArea ? postCreationArea.querySelector('div#postFileSelectedName') : null; // File name display
-
-    const postLocationButton = postCreationArea ? postCreationArea.querySelector('button#postLocationButton') : null; // Location button
-    const postLocationStatusSpan = postCreationArea ? postCreationArea.querySelector('span#postLocationStatus') : null; // Location status span
-    const postGeoLatitudeInput = postCreationArea ? postCreationArea.querySelector('input#postGeoLatitude') : null; // Hidden latitude input
-    const postGeoLongitudeInput = postCreationArea ? postCreationArea.querySelector('input#postGeoLongitude') : null; // Hidden longitude input
-
-    const createPostButton = postCreationArea ? postCreationArea.querySelector('button#createPostButton') : null; // The "Post" button
-
+    const postTextarea = document.getElementById('postContent');
+    const postPhotoButton = document.getElementById('postPhotoButton');
+    const postImageUploadInput = document.getElementById('postImageUpload');
+    const postImagePreview = document.getElementById('postImagePreview');
+    const postFileSelectedName = document.getElementById('postFileSelectedName');
+    const createPostButton = document.getElementById('createPostButton');
 
     const fetchPosts = async () => {
-        if (!postsContainer) {
-             console.error("Posts container not found in Home View for fetching!");
-             return;
-         }
         postsContainer.innerHTML = '<p class="text-center text-gray-500">Loading posts...</p>';
 
         try {
@@ -233,10 +225,8 @@ function initializeHomeView() {
              const postElement = document.createElement('div');
              postElement.classList.add('bg-white', 'rounded-lg', 'shadow-md');
 
-             // --- Format the date (Optional: implement robust date formatting) ---
              let formattedDate = post.date ? new Date(post.date).toLocaleString() : 'Unknown date';
-             // You could add logic here to display "X hours ago", "Y days ago", etc.
-             // Example (basic):
+
              if (post.date) {
                 const postDate = new Date(post.date);
                 const now = new Date();
@@ -250,357 +240,164 @@ function initializeHomeView() {
                 }
              }
 
-             const relativeImagePath = post.photo; // Assuming post.photo stores the relative path
+             const relativeImagePath = post.photo;
 
-        // --- Construct the full, publicly accessible image URL ---
-        const postImageUrl = relativeImagePath
-                           ? `http://localhost:3000/images/${relativeImagePath}` // Prepend backend URL + static path
+             const postImageUrl = relativeImagePath
+                           ? `http://localhost:3000/images/${relativeImagePath}`
                            : null;
 
 
-             // --- Get User Info (Requires backend to join/lookup user data) ---
-             // Currently, your backend getPosts only projects 'creatorId'.
-             // To display username and avatar, the backend needs to either:
-             // 1. Perform a lookup/join on the users collection in the getPosts controller.
-             // 2. Have a separate endpoint to get user details by ID.
-             // For now, we'll use placeholders or the user ID if needed.
-             // Let's assume the backend *could* return user info nested under 'user' property:
-             // post.user = { username: "...", avatarUrl: "..." }
              const username = post.user?.username || 'Unknown User';
-             const avatarUrl = post.user?.avatarUrl || 'https://via.placeholder.com/40'; // Default avatar
+             const avatarUrl = post.user?.avatarUrl || 'https://via.placeholder.com/40';
 
 
-             // --- Construct the HTML for a single post card ---
              postElement.innerHTML = `
-                 <div class="p-4">
-                     <div class="flex items-center mb-4">
-                         <img
-                             src="${avatarUrl}" {/* Use dynamic avatar URL */}
-                             alt="${username}'s avatar"
-                             class="w-10 h-10 rounded-full mr-3"
-                         >
-                         <div>
-                             <h3 class="font-semibold">${username}</h3> {/* Use dynamic username */}
-                             <p class="text-gray-500 text-sm">${formattedDate}</p> {/* Use dynamic date */}
-                         </div>
+             <div class="p-4">
+                 <div class="flex items-center mb-4">
+                     <img
+                         src="${avatarUrl}"
+                         alt="${username}'s avatar"
+                         class="w-10 h-10 rounded-full mr-3"
+                     >
+                     <div>
+                         <h3 class="font-semibold">${username}</h3>
+                         <p class="text-gray-500 text-sm">${formattedDate}</p>
                      </div>
-                     <p class="mb-4">${post.title || post.content || 'No content.'}</p> {/* Use 'title' or 'content' based on your backend */}
-                     ${postImageUrl ? `<img src="${postImageUrl}" alt="Post image" class="w-full rounded-lg mb-4">` : ''} {/* Display image if URL exists */}
-
-                     <div class="flex justify-between text-gray-600">
-                         {/* Display Location if available and projected */}
-                         ${post.latitude !== undefined && post.longitude !== undefined
-                             ? `<div>📍 ${parseFloat(post.latitude).toFixed(4)}, ${parseFloat(post.longitude).toFixed(4)}</div>`
-                             : post.locationText ? `<div>📍 ${post.locationText}</div>` : '<div></div>' // Assuming 'locationText' projected
-                         }
-                         <div>
-                             <span>❤️ ${post.likes !== undefined ? post.likes : 0}</span> {/* Display likes */}
-                             <span class="ml-3">💬 ${post.commentsCount || 0}</span> {/* Display comments count (if projected) */}
-                         </div>
-                     </div>
-                     {/* Add like/comment buttons here if needed, with event listeners */}
                  </div>
-             `;
+                 <p class="mb-4">${post.title || post.content || 'No content.'}</p>
+                 ${postImageUrl ? `<img src="${postImageUrl}" alt="Post image" class="w-full rounded-lg mb-4">` : ''}
+                     <div>
+                         <span>❤️ ${post.likes !== undefined ? post.likes : 0}</span>
+                     </div>
+                 </div>
+             </div>
+         `;
 
-            // Append the created post element to the container
-            postsContainer.appendChild(postElement);
+         console.log("Attempting to append post to container:", postsContainer);
+        postsContainer.appendChild(postElement);
         });
     };
 
     const createPost = async () => {
-        // Ensure required elements were found during initialization
-        if (!postTextarea || !postImageUploadInput || !postGeoLatitudeInput || !postGeoLongitudeInput || !createPostButton) {
+        if (!postTextarea || !postImageUploadInput || !createPostButton) {
              console.error("Cannot create post: Missing required form elements.");
              alert("Error: Post creation form is not fully loaded.");
              return;
         }
 
-        // Get the content from the textarea
         const content = postTextarea.value.trim();
 
-        // Get the selected file (if any)
         const photoFile = postImageUploadInput.files ? postImageUploadInput.files[0] : null;
 
-        // Validation: Require content OR a photo (adjust if one is mandatory)
         if (content === '' && !photoFile) {
             alert('Please add text content or select a photo to create a post.');
-            return; // Stop the function if validation fails
+            return;
         }
 
-        // --- Get token from sessionStorage (Required for authentication) ---
-        const accessToken = sessionStorage.getItem('accessToken'); // Or localStorage
-
-        if (!accessToken) {
-            console.error("No access token found. User is not logged in.");
-            alert('You must be logged in to create a post. Please log in again.');
-             // Optional: redirect to login page
-             // window.location.href = 'login.html';
-            return; // Stop post creation if not authenticated
-        }
-        // -----------------------------------------------------------------
-
-
-        // --- Use FormData to collect all data for submission ---
-        // FormData is required because you're uploading a file
         const formData = new FormData();
-
-        // Append the text content (use the name your backend controller expects, likely 'content' or 'title')
-        // Based on your backend createPost, it expects 'title' from req.body. Let's use 'title' for the text content.
-        // If 'title' is separate from the main post text/content, adjust backend or frontend names.
-        formData.append('title', content); // <<< Using 'title' to match backend req.body.title
-
-        // Append geo coordinates IF they were captured and the backend expects them
-        // Your backend createPost doesn't currently save latitude/longitude from req.body.
-        // If you want to save post location, you need to update your backend createPost controller
-        // to read latitude/longitude from req.body and save them in the new post document.
-        // If you DO update the backend, append them here:
-        const latitude = postGeoLatitudeInput.value;
-        const longitude = postGeoLongitudeInput.value;
-        if (latitude && longitude) {
-            formData.append('latitude', latitude); // <<< Append if backend handles this
-            formData.append('longitude', longitude); // <<< Append if backend handles this
-             console.log("Appending geo coordinates to FormData:", { latitude, longitude });
-        } else {
-             console.log("No geo location captured or appended for this post.");
-        }
-
-        // Append the selected file IF a file was chosen
+        formData.append('title', content);
         if (photoFile) {
-             // 'photo' is the NAME attribute of the file input or the field name Multer expects
-             // Your backend Multer config (uploadPostPhoto) uses .single('photo').
-             // The field name in FormData MUST match this: 'photo'.
-            formData.append('photo', photoFile); // <<< Use 'photo' to match backend Multer field name
-            console.log("Appending photo file to FormData:", photoFile.name);
-        } else {
-             console.log("No photo file selected or appended for this post.");
+            formData.append('photo', photoFile);
         }
-        // -------------------------------------------------------
 
-
-        // Optional: Disable button and show loading state
         createPostButton.disabled = true;
         const originalButtonText = createPostButton.textContent;
         createPostButton.textContent = 'Posting...';
 
-
         try {
-            // !!! IMPORTANT !!! Update this URL to match your backend POST create post endpoint
-            // Based on your post.js router, the endpoint for create post is POST /
-            // Assuming the router is mounted at '/api/posts', the full URL is '/api/posts'
-            const backendCreatePostUrl = 'http://localhost:3000/api/posts'; // <<<--- Verify this URL
-
+            const backendCreatePostUrl = 'http://localhost:3000/post/';
 
             const response = await fetch(backendCreatePostUrl, {
-                method: 'POST', // Use POST method for creation
-                body: formData, // Send the FormData object (includes text, geo, and file)
-                headers: {
-                    // --- Add Authorization header for authentication ---
-                    'Authorization': `Bearer ${accessToken}`
-                    // -------------------------------------------------
-                    // DO NOT manually set 'Content-Type' header when using FormData;
-                    // fetch sets it automatically to 'multipart/form-data' with boundary
-                },
-                // credentials: 'include', // Likely still needed if refresh token is HttpOnly cookie
+                method: 'POST',
+                body: formData,
+                headers: {},
+                credentials: 'include',
             });
 
-            // --- Handle the response ---
-            if (response.ok) { // Status 200-299 is OK (Backend should ideally send 201 Created)
-                const result = await response.json().catch(() => ({ message: 'Post created successfully (no details returned).' })); // Try parsing JSON, handle potential empty response
+            if (response.ok) {
+                const result = await response.json().catch(() => ({ message: 'Post created successfully (no details returned).' }));
                 console.log('Post created successfully:', result);
-                alert('Post created successfully!'); // Show success message
+                alert('Post created successfully!');
 
-                // --- Clear the form/inputs after successful post ---
-                postTextarea.value = ''; // Clear text area
-                if (postImageUploadInput) postImageUploadInput.value = ''; // Clear file input
-                if (postImagePreview) {
-                     postImagePreview.src = '#'; // Clear preview src
-                     postImagePreview.classList.add('hidden'); // Hide preview image
-                     postImagePreview.classList.remove('block');
-                }
-                if (postFileSelectedName) {
-                     postFileSelectedName.textContent = ''; // Clear file name display
-                     postFileSelectedName.classList.add('hidden');
-                }
-                if (postGeoLatitudeInput) postGeoLatitudeInput.value = ''; // Clear hidden inputs
-                if (postGeoLongitudeInput) postGeoLongitudeInput.value = '';
-                if (postLocationStatusSpan) {
-                     postLocationStatusSpan.textContent = ''; // Clear location status
-                     postLocationStatusSpan.style.color = '';
-                }
-                // ----------------------------------------------------
-
-                // Refresh the feed to show the new post
+                postTextarea.value = '';
+                if (postImageUploadInput) postImageUploadInput.value = '';
+                if (postImagePreview) { postImagePreview.src = '#'; postImagePreview.classList.add('hidden'); postImagePreview.classList.remove('block'); }
+                if (postFileSelectedName) { postFileSelectedName.textContent = ''; postFileSelectedName.classList.add('hidden'); }
                 fetchPosts();
 
             } else if (response.status === 401) {
-                // --- Handle 401: Authentication Failed (Token expired or invalid) ---
-                console.error('Authentication failed creating post. Token expired or invalid.', response.status);
-                sessionStorage.removeItem('accessToken'); // Clear the invalid token from storage
+                console.error('Authentication failed creating post. Backend returned 401.');
                 alert('Session expired. Please log in again.');
-                window.location.href = 'login.html'; // Redirect to the login page
-                // -----------------------------------------------------------------
+                window.location.href = 'login.html';
             }
              else {
-                // Handle other API errors (e.g., 400 Bad Request from backend validation)
                 const errorData = await response.json().catch(() => ({ message: `Failed to create post. Status: ${response.status}` }));
                 console.error('Failed to create post:', response.status, errorData);
-                alert(errorData.message || 'Failed to create post.'); // Show user an error message
+                alert(errorData.message || 'Failed to create post.');
              }
 
         } catch (error) {
-            // Handle network errors (server down, connection issues)
             console.error('Network error creating post:', error);
             alert('Network error. Could not connect to the server to create the post.');
         } finally {
-             // --- Re-enable the button ---
              createPostButton.disabled = false;
-             createPostButton.textContent = originalButtonText; // Restore original text
-             // --------------------------
+             createPostButton.textContent = originalButtonText;
         }
    };
 
 
 
    if (!postCreationArea) {
-    console.error("Post creation area (#postCreationArea) not found in Home View! Disabling post creation functionality."); // Update error message
-    // Hide the tabs or the entire section if the creation area container is missing
-    // (Optional: add an ID to the tabs div if you want to hide it easily)
-    const homeTabContent = document.querySelector('#homeBody > div.flex.mb-6'); // Example selector for the tabs div
-    if (homeTabContent) homeTabContent.style.display = 'none'; // Example: Hide the tabs section
-    // Still proceed to fetch posts if the postsContainer was found
-    fetchPosts(); // Call fetchPosts to load the feed
-    return; // Stop initialization of post creation logic
+    console.error("Post creation area (#postCreationArea) not found in Home View! Disabling post creation functionality.");
+    const homeTabContent = homeBody.querySelector('.flex.mb-6');
+    if (homeTabContent) homeTabContent.style.display = 'none';
+    fetchPosts();
+    return;
 }
 
-// Now check the individual elements *within* the postCreationArea, but only if postCreationArea was found
-// This check ensures all required sub-elements are present
-if (!postTextarea || !postPhotoButton || !postImageUploadInput || !postImagePreview || !postFileSelectedName || !postLocationButton || !postLocationStatusSpan || !postGeoLatitudeInput || !postGeoLongitudeInput || !createPostButton) {
-    console.error("Some required elements *within* the post creation area were not found! Disabling post creation functionality."); // Update error message
-    // Hide the entire post creation area if its internal elements are missing
+if (!postTextarea || !postPhotoButton || !postImageUploadInput || !postImagePreview || !postFileSelectedName || !createPostButton) {
+    console.error("Some required elements *within* the post creation area were not found! Disabling post creation functionality.");
     postCreationArea.style.display = 'none';
-    // Still proceed to fetch posts if the postsContainer was found
-    fetchPosts(); // Call fetchPosts to load the feed
-    return; // Stop initialization of post creation logic
+    fetchPosts();
+    return;
 }
 
-
-
-
-    // ======================================================= //
-    // Event Listeners for Post Creation Form                  //
-    // ======================================================= //
-
-    // Add event listener to the "Post" button
     if (createPostButton) {
-        // Use 'click' event listener on the button, not 'submit' on the form
-        // Since your button type is 'button', not 'submit', it won't trigger form submit
         createPostButton.addEventListener('click', createPost);
     } else {
         console.error("Post button element not found in Home View!");
     }
 
-    // Add event listener to the "Photo" label (which is linked to the hidden file input)
     if (postImageUploadInput && postImagePreview && postFileSelectedName) {
         postImageUploadInput.addEventListener('change', (event) => {
             const file = event.target.files ? event.target.files[0] : null;
 
             if (file) {
-                // Display file name
                 postFileSelectedName.textContent = `Selected: ${file.name}`;
                 postFileSelectedName.classList.remove('hidden');
 
-                // Display image preview
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    postImagePreview.src = e.target.result; // Set preview source to data URL
-                    postImagePreview.classList.remove('hidden'); // Show the image element
-                    postImagePreview.classList.add('block'); // Ensure it's displayed block
+                    postImagePreview.src = e.target.result;
+                    postImagePreview.classList.remove('hidden');
+                    postImagePreview.classList.add('block');
                 };
-                reader.readAsDataURL(file); // Read the file content as a data URL for preview
+                reader.readAsDataURL(file);
 
             } else {
-                // No file selected or selection was canceled
                 postFileSelectedName.textContent = '';
                 postFileSelectedName.classList.add('hidden');
-                postImagePreview.src = '#'; // Clear the image source
-                postImagePreview.classList.add('hidden'); // Hide the image element
+                postImagePreview.src = '#';
+                postImagePreview.classList.add('hidden');
                 postImagePreview.classList.remove('block');
             }
         });
     } else {
          console.error("Required elements for Photo Upload preview not found in Home View!");
-         // Hide the photo button if elements are missing
          if (postPhotoButton) postPhotoButton.style.display = 'none';
     }
 
 
-     // Add event listener to the "Location" button
-     if (postLocationButton && postLocationStatusSpan && postGeoLatitudeInput && postGeoLongitudeInput) {
-         postLocationButton.addEventListener('click', () => {
-             // Check if the browser supports Geolocation
-             if (!navigator.geolocation) {
-                 postLocationStatusSpan.textContent = 'Geolocation not supported by your browser.';
-                 postLocationStatusSpan.style.color = 'red';
-                 console.error('Geolocation not supported');
-                 return;
-             }
-
-             postLocationStatusSpan.textContent = 'Getting location...';
-             postLocationButton.disabled = true; // Disable button while fetching location
-
-             // --- Call the Geolocation API ---
-             navigator.geolocation.getCurrentPosition(
-                 (position) => { // Success callback
-                     const latitude = position.coords.latitude;
-                     const longitude = position.coords.longitude;
-                     console.log(`Post location captured: Lat ${latitude}, Lon ${longitude}`);
-
-                     // Populate the hidden input fields
-                     postGeoLatitudeInput.value = latitude;
-                     postGeoLongitudeInput.value = longitude;
-
-                     postLocationStatusSpan.textContent = `Location captured: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-                     postLocationStatusSpan.style.color = 'green'; // Optional: change color on success
-                     postLocationButton.disabled = false; // Re-enable button
-
-                 },
-                 (error) => { // Error callback
-                     postLocationButton.disabled = false; // Re-enable button
-
-                     let errorMessage = 'Error getting location.';
-                     switch(error.code) {
-                         case error.PERMISSION_DENIED: errorMessage = 'Permission denied.'; break;
-                         case error.POSITION_UNAVAILABLE: errorMessage = 'Unavailable.'; break;
-                         case error.TIMEOUT: errorMessage = 'Timed out.'; break;
-                         case error.UNKNOWN_ERROR: errorMessage = 'Unknown error.'; break;
-                     }
-                      postLocationStatusSpan.textContent = `Geolocation failed: ${errorMessage}`;
-                      postLocationStatusSpan.style.color = 'red'; // Optional: change color on error
-                      console.error('Post Geolocation error:', error);
-
-                      // Clear hidden inputs if location fails
-                      postGeoLatitudeInput.value = '';
-                      postGeoLongitudeInput.value = '';
-                 },
-                 { // Options for getCurrentPosition
-                     enableHighAccuracy: true, // Request high accuracy if available
-                     timeout: 10000, // Timeout after 10 seconds
-                     maximumAge: 0 // Don't use a cached position
-                 }
-             );
-         });
-     } else {
-          console.error("Required elements for Post Location not found in Home View!");
-          // Hide the location button if elements are missing
-          if (postLocationButton) postLocationButton.style.display = 'none';
-     }
-
-
-    // ======================================================= //
-    // Initial Actions for Home View                           //
-    // ======================================================= //
-
-   // Call fetchPosts when the home view is initialized to load the feed
    fetchPosts();
 
    console.log("Home View initialization complete.");
@@ -707,6 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialView = 'home'; // Set your desired default view
     switchViews(initialView); // Load the initial view
 });
+
 
 async function fetchAndInjectPartial(htmlFileName, targetElementId, targetContainer, initializationFunction = null) {
      if (!targetContainer) {
@@ -889,6 +687,7 @@ function initializePostRouteView() {
     console.log("Post Route View initialization complete.");
 }
 
+
 function initializeRoutesView() {
     console.log("Initializing Routes View...");
 
@@ -1014,9 +813,6 @@ function initializeRoutesView() {
 
     fetchRoutes();
 }
-
-
-
 
 
 function initializeSingleRouteView(routeId) {
@@ -1359,3 +1155,337 @@ function initializeSingleRouteView(routeId) {
 
     console.log("Single Route View initialization complete.");
 }
+
+
+async function logout() {
+    console.log("Logging out user...");
+
+    // --- Optional: Clear any leftover frontend storage just in case ---
+    // While authentication is primarily via HttpOnly cookies, it's good practice
+    // to clear any related data that might have been stored in sessionStorage or localStorage
+    // at login or elsewhere, for a clean state.
+    sessionStorage.removeItem('accessToken');
+    localStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken'); // If refresh token was ever stored here
+    localStorage.removeItem('refreshToken'); // If refresh token was ever stored here
+    // Clear any other user-specific data you might be storing
+    sessionStorage.removeItem('userId');
+    localStorage.removeItem('userId');
+    // ... remove any other relevant keys ...
+    // ----------------------------------------------------------
+
+    // --- Call the backend logout endpoint ---
+    // This tells your backend server to invalidate the user's session/tokens
+    // and clear the HttpOnly authentication cookies.
+    // !!! You need to define this backend endpoint URL !!!
+    const backendLogoutUrl = 'http://localhost:3000/api/logout'; // <-- VERIFY this URL matches your backend
+
+    try {
+        const response = await fetch(backendLogoutUrl, {
+            method: 'POST', // Logout is typically a POST request
+            headers: {
+                'Content-Type': 'application/json',
+                // No need for 'Authorization: Bearer' header here,
+                // because authentication for *this* endpoint relies on the browser
+                // automatically sending the HttpOnly cookies.
+            },
+            // credentials: 'include' is CRUCIAL to ensure the browser sends the HttpOnly cookies
+            credentials: 'include',
+            // Typically, a logout POST request doesn't need a body, but depends on backend implementation
+            // body: JSON.stringify({}), // Include a body if your backend expects one
+        });
+
+        // --- Handle the response from the backend ---
+        if (response.ok) { // Backend responded with a success status (e.g., 200 OK)
+            console.log("Backend logout successful. Redirecting to login page.");
+            // Backend should have cleared cookies and invalidated the token
+            // Now, redirect the user to the login page
+            window.location.href = 'login.html';
+        } else {
+            // If backend logout endpoint returned an error status (e.g., 401, 500)
+            console.error("Backend logout failed:", response.status, response.statusText);
+            // Even if backend logout failed, we should probably still redirect
+            // the user to the login page to force a re-authentication attempt.
+            // The frontend storage is already cleared above.
+            alert("Logout failed on the server. Please try logging in again."); // Inform the user
+            window.location.href = 'login.html'; // Redirect anyway
+        }
+
+    } catch (error) {
+        // Handle network errors (e.g., backend server is not running or reachable)
+        console.error("Network error during logout:", error);
+        alert("Network error during logout. Could not reach the server. Please check connection. Redirecting.");
+        window.location.href = 'login.html'; // Redirect even on network error
+    }
+}
+
+
+async function initializeCommunitiesView() {
+    console.log("Initializing Communities View...");
+
+    const communitiesListContainer = document.getElementById('communitiesListContainer');
+    const communitySearchInput = document.getElementById('communitySearchInput');
+
+    // Check if the container element was found in the injected HTML
+    if (!communitiesListContainer) {
+        console.error("Communities list container (#communitiesListContainer) not found in Communities View!");
+        // Handle this error - maybe show a message in the main content area
+        const mainDiv = document.getElementById('mainDiv'); // Or communitiesBody if injecting that
+        if (mainDiv) mainDiv.innerHTML = '<p class="text-red-500 text-center">Error loading communities section.</p>';
+        return; // Stop initialization
+    }
+    if (!communitySearchInput) {
+        console.warn("Community search input (#communitySearchInput) not found. Search functionality disabled.");
+   }
+
+    // --- Helper function to fetch communities from the backend ---
+    const fetchCommunities = async (searchTerm = '') => { // Accept optional search term
+        communitiesListContainer.innerHTML = '<p class="text-center text-gray-500 col-span-full">Loading communities...</p>';
+
+        try {
+            // !!! VERIFY this URL matches your backend endpoint for getting ALL communities !!!
+            const backendCommunitiesUrl = new URL('http://localhost:3000/community/'); // Use URL object to easily add search params
+
+            // If a search term is provided and not empty, add it as a query parameter
+            if (searchTerm.trim() !== '') {
+                 // Assuming your backend GET /community/ endpoint supports a 'search' query parameter
+                 // that filters communities by name or description.
+                 // If your backend doesn't support this yet, you'll need to implement it,
+                 // or rely solely on client-side filtering after fetching all communities initially.
+                 // For now, let's assume backend supports ?search=...
+                 backendCommunitiesUrl.searchParams.append('search', searchTerm.trim());
+            }
+             // Optional: Add pagination params if your backend supports them
+             // backendCommunitiesUrl.searchParams.append('page', 1);
+             // backendCommunitiesUrl.searchParams.append('limit', 20);
+
+
+            const response = await fetch(backendCommunitiesUrl.toString(), { // Convert URL object back to string
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include', // Include cookies
+            });
+
+            // --- Handle the response ---
+            if (response.ok) { // Status 200-299 is OK
+                const communities = await response.json(); // Parse JSON
+                console.log('Fetched communities:', communities);
+                allCommunities = communities; // Store the full list of fetched communities
+                renderCommunities(allCommunities); // Render the full list
+            } else if (response.status === 401) {
+                 console.error('Authentication failed fetching communities. Token expired or invalid.');
+                 communitiesListContainer.innerHTML = '<p class="text-red-500 text-center col-span-full">Session expired. Please log in again.</p>';
+                  setTimeout(() => { alert('Session expired. Please log in again.'); window.location.href = 'login.html'; }, 100);
+            }
+            else {
+                const errorData = await response.json().catch(() => ({ message: `Failed to fetch communities. Status: ${response.status}` }));
+                console.error('Failed to fetch communities:', response.status, errorData);
+                communitiesListContainer.innerHTML = `<p class="text-red-500 text-center col-span-full">Error loading communities: ${errorData.message || 'Could not fetch communities.'}</p>`;
+            }
+
+        } catch (error) {
+            console.error('Network error fetching communities:', error);
+             communitiesListContainer.innerHTML = `<p class="text-red-500 text-center col-span-full">Network error loading communities. Please check your connection and the server.</p>`;
+        }
+    };
+
+
+    const renderCommunities = (communitiesToRender) => {
+        if (!communitiesListContainer) {
+             console.error("Communities list container not found for rendering!");
+             return;
+         }
+
+        communitiesListContainer.innerHTML = ''; // Clear the container
+
+        // If no communities are passed to render, display a message
+        if (!communitiesToRender || !Array.isArray(communitiesToRender) || communitiesToRender.length === 0) {
+            communitiesListContainer.innerHTML = '<p class="text-gray-500 text-center col-span-full">No communities found matching your criteria.</p>';
+            return;
+        }
+
+        // Loop through the array of communities and create HTML for each one
+        communitiesToRender.forEach(community => {
+             const communityCardElement = document.createElement('div');
+             communityCardElement.classList.add('bg-white', 'rounded-lg', 'shadow-md', 'overflow-hidden');
+
+             const communityImageUrl = (community.image)
+                                    ? `http://localhost:3000/images/${community.image}` // Prepend base URL
+                                    : 'https://via.placeholder.com/300x150?text=No+Image'; // Placeholder
+
+
+             const memberCount = community.memberCount !== undefined ? community.memberCount : 0;
+
+
+             communityCardElement.innerHTML = `
+                 <div class="h-36 bg-cover bg-center" style="background-image: url('${communityImageUrl}')"></div>
+                 <div class="p-4">
+                     <div class="flex justify-between items-center mb-2">
+                         {/* Add onclick to switch to the single community view, passing the community ID */}
+                         <button onclick="switchViews('singleCommunity', '${community._id}')"> {/* Pass the community's database ID */}
+                             <h2 class="text-xl font-semibold hover:underline cursor-pointer">${community.name || 'Unnamed Community'}</h2> {/* Display community name */}
+                         </button>
+                         {/* Member Count */}
+                         <span class="text-sm text-gray-500">${memberCount} members</span> {/* Display member count */}
+                     </div>
+                     {/* Community Description */}
+                     <p class="text-gray-600 mb-4">${community.description || 'No description.'}</p> {/* Display community description */}
+
+                     {/* Join/Joined Button (Logic based on user membership needed here) */}
+                     <button class="w-full py-2 bg-white border rounded-md hover:bg-gray-100">Join</button> {/* Example button */}
+                 </div>
+             `;
+
+            communitiesListContainer.appendChild(communityCardElement); // Append the card
+        });
+    };
+
+    if (communitySearchInput) { // Only add if the element was found
+        // Use 'input' event for real-time filtering as user types
+        communitySearchInput.addEventListener('input', (event) => {
+            const searchTerm = event.target.value.trim().toLowerCase();
+
+            // --- Client-side Filtering (Simpler approach) ---
+            // Filter the 'allCommunities' array based on the search term
+            const filteredCommunities = allCommunities.filter(community => {
+                // Check if community name or description includes the search term (case-insensitive)
+                const nameMatch = community.name ? community.name.toLowerCase().includes(searchTerm) : false;
+                const descriptionMatch = community.description ? community.description.toLowerCase().includes(searchTerm) : false;
+                return nameMatch || descriptionMatch;
+            });
+            renderCommunities(filteredCommunities); // Render the filtered list
+
+            // --- OR Server-side Filtering (Requires backend support) ---
+            // Call fetchCommunities with the search term. This will re-fetch from backend.
+            // fetchCommunities(searchTerm); // Uncomment this if your backend supports ?search=
+        });
+   }
+
+
+   // --- Initial Action: Fetch and render communities when this view is loaded ---
+   // This fulfills the requirement to automatically load communities.
+   fetchCommunities();
+
+    console.log("Communities View initialization complete.");
+}
+
+async function createNewCommunity() {
+    console.log("Attempting to create a new community...");
+
+    // --- Prompt user for community details (Simple approach) ---
+    const communityName = prompt("Enter the name for your new community:");
+    if (!communityName || communityName.trim() === '') {
+        alert("Community name cannot be empty.");
+        return; // Stop if name is empty
+    }
+
+    const communityDescription = prompt("Enter a brief description for your community:");
+     // Description can potentially be empty based on backend validation, depending on requirements
+
+    // Optional: Prompt or use a file input for an image if you want to include one
+    // For simplicity using prompt is hard for file selection. You'd need a modal
+    // with a file input similar to post creation. Let's omit image upload for now
+    // in this simple prompt version.
+
+    // --- Prepare the data to send to the backend ---
+    // Since we are not including a file with prompt, we can send JSON.
+    // If you add file upload, you MUST use FormData like in createPost.
+    const newCommunityData = {
+        name: communityName.trim(),
+        description: communityDescription ? communityDescription.trim() : '', // Send description
+        // No image in this simple prompt version
+    };
+
+    // --- Get token from storage if needed (If backend requires header auth) ---
+    // IMPORTANT: If your backend createCommunity endpoint relies on HttpOnly cookies (via verifyJWT),
+    // you DON'T need to get the token from storage or add an Authorization header.
+    // The browser will send the cookies automatically with credentials: 'include'.
+    // Based on your community.js router, createCommunity uses verifyJWT, so it relies on cookies.
+    // Therefore, we don't need to get token from storage here.
+    // const accessToken = sessionStorage.getItem('accessToken');
+    // if (!accessToken) { alert("You must be logged in to create a community."); return; }
+    // ------------------------------------------------------------------------
+
+    // --- Send the data to the backend POST /community/ endpoint ---
+    const backendCreateCommunityUrl = 'http://localhost:3000/community/'; // VERIFY this URL
+
+    try {
+        const response = await fetch(backendCreateCommunityUrl, {
+            method: 'POST', // Use POST for creation
+            // headers: { // Use headers for JSON body
+            //     'Content-Type': 'application/json',
+            //     // --- REMOVE Authorization header if using HttpOnly cookies ---
+            //     // 'Authorization': `Bearer ${accessToken}` // REMOVE THIS
+            // },
+             // body: JSON.stringify(newCommunityData), // Send JSON body
+
+            // --- Use FormData if including file upload (requires a file input UI) ---
+            // For the simple prompt version without file, JSON is easier.
+            // If you add file upload UI, switch back to FormData and remove JSON body/header
+            // const formData = new FormData();
+            // formData.append('name', newCommunityData.name);
+            // formData.append('description', newCommunityData.description);
+            // if (communityImageFile) { formData.append('image', communityImageFile); } // Append file if available
+            // body: formData, // Use FormData
+
+            // --- Use JSON body for the prompt-based version without file ---
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newCommunityData),
+            // ----------------------------------------------------------
+
+            // --- Keep credentials: 'include' to send HttpOnly cookies ---
+            credentials: 'include',
+        });
+
+        // --- Handle the backend response ---
+        if (response.ok) { // Status 200-299 is OK (Backend should ideally send 201 Created)
+            const result = await response.json().catch(() => ({ message: 'Community created successfully (no details returned).' }));
+            console.log('Community created successfully:', result);
+            alert('Community created successfully!');
+
+            // --- Refresh the communities list to show the new community ---
+            // Assuming fetchCommunities is accessible in this scope (it should be if defined higher up or globally)
+            fetchCommunities(); // Re-fetch and re-render the list
+
+        } else if (response.status === 401) {
+             // --- Handle 401: Authentication Failed (Backend verifyJWT returned 401) ---
+             console.error('Authentication failed creating community. Backend returned 401.');
+             alert('Session expired. Please log in again.');
+             window.location.href = 'login.html'; // Redirect
+        } else if (response.status === 409) {
+            // Handle conflict (e.g., community name already exists)
+            const errorData = await response.json().catch(() => ({ message: 'Community name already exists.' }));
+            console.error('Community creation conflict:', errorData.message);
+            alert(errorData.message);
+        }
+         else {
+            // Handle other API errors (e.g., 400 Bad Request from backend validation)
+            const errorData = await response.json().catch(() => ({ message: `Failed to create community. Status: ${response.status}` }));
+            console.error('Failed to create community:', response.status, errorData);
+            alert(errorData.message || 'Failed to create community.'); // Show user an error message
+         }
+
+    } catch (error) {
+        // Handle network errors (server down, connection issues)
+        console.error('Network error creating community:', error);
+        alert('Network error. Could not connect to the server to create the community.');
+    } finally {
+        // Optional: Re-enable button if you disabled it
+    }
+}
+
+// You will also need to create initializeSingleCommunityView later:
+/*
+async function initializeSingleCommunityView(communityId) {
+    console.log("Initializing Single Community View for ID:", communityId);
+    // This function will fetch details for a specific community using the communityId
+    // and populate the singleCommunity.html elements.
+    // ... fetch community details from backend GET /community/:id ...
+    // ... update title, description, members, etc. in singleCommunity.html ...
+}
+*/
+
+// Ensure initializeCommunitiesView and initializeSingleCommunityView are added to your
+// initializationFunctions map in the switchViews function as shown in Step 2.

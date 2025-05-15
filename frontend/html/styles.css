@@ -9,3 +9,15 @@
 #main-page {
     display: flex;
 }
+
+/* Add this CSS temporarily for debugging */
+#postCreationArea {
+    background-color: rgba(173, 216, 230, 0.5); /* Light blue with transparency */
+    border: 2px solid blue;
+}
+
+#postsFeedContainer {
+    background-color: rgba(144, 238, 144, 0.5); /* Light green with transparency */
+    border: 2px solid green;
+    min-height: 100px; /* Give it a min height to be visible when empty */
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./script.js"></script>
+    <title>Escalapp</title>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8" id="createCommunityBody">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-blue-600 p-4 text-white">
+                <h2 class="text-xl font-semibold">Create New Community</h2> 
+            </div>
+
+            <form id="newCommunityForm" class="p-6 space-y-6">
+
+                <div>
+                    <label for="communityName" class="block text-sm font-medium text-gray-700 mb-1">Community Name</label>
+                    <input type="text" id="communityName" name="name"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Example: Climbing Partners NYC" required>
+                </div>
+
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="description" name="description" rows="4"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Describe the focus, goals, or location of your community..."></textarea>
+                </div>
+
+
+                {/* Image Upload Section */}
+                {/* This structure is similar to the post creation image upload */}
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <div class="mt-4 flex text-sm text-gray-600 justify-center items-center space-x-2"> {/* Added space-x-2 and items-center for better alignment */}
+                        {/* Label linked to the file input - Change 'for' and add ID */}
+                        <label for="communityImageUpload" id="communityImagePhotoButton" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                            <span>Upload a photo</span>
+                            {/* File Input - Change ID and, most importantly, the 'name' attribute */}
+                            {/* The 'name' attribute MUST match what Multer in your backend expects (uploadCommunityImage.single('image')) */}
+                            <input
+                                id="communityImageUpload" {/* Changed ID */}
+                                name="image"  class="sr-only" {/* Changed Name attribute to 'image' */}
+                                type="file"
+                                accept="image/*"
+                                onchange="const img = document.getElementById('communityImagePreview'); const fileNameDiv = document.getElementById('communityFileSelectedName'); const file = this.files[0]; if(file){img.src = window.URL.createObjectURL(file); img.classList.remove('hidden'); img.classList.add('block'); fileNameDiv.textContent = `Selected: ${file.name}`; fileNameDiv.classList.remove('hidden');} else {img.src = '#'; img.classList.add('hidden'); img.classList.remove('block'); fileNameDiv.textContent = ''; fileNameDiv.classList.add('hidden');}"
+                            >
+                        </label>
+                        <p class="pl-1">or drag and drop</p>
+                    </div>
+                     {/* Image Preview - Change ID and add Tailwind classes for display state (hidden by default) */}
+                     <img id="communityImagePreview" alt="Community image preview" class="mt-4 w-full max-h-64 object-cover rounded-lg hidden" /> {/* Changed ID, added classes */}
+                     {/* File Name Display - Add ID and Tailwind classes for display state (hidden by default) */}
+                    <div id="communityFileSelectedName" class="text-sm text-gray-500 mt-2 text-center hidden"></div> {/* Added ID and classes */}
+
+                    <p class="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</p>
+                </div>
+
+                {/* Buttons */}
+                <div class="flex space-x-3 justify-end">
+                    {/* Cancel Button - Change onclick destination */}
+                    {/* This button should navigate back to the communities list */}
+                    <button onclick="switchViews('communities')" type="button" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Cancel {/* Keep text */}
+                    </button>
+                    {/* Submit Button - Change text */}
+                    {/* This button will trigger the form submission handled by JS */}
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Create Community {/* Changed text */}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
