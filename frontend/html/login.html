@@ -86,9 +86,12 @@
         // ---------------------------------------------------
 
         try {
+          // --- Use GET method ---
           const response = await fetch(backendUrlWithParams, {
               method: 'GET'
+              // No 'Content-Type' header and no 'body' for GET requests
           });
+          // -----------------------
 
           if (response.ok) {
             const data = await response.json();

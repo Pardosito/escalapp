@@ -86,7 +86,7 @@ async function switchViews(view) {
         case "post": // Assuming this is for posting a new route/climb, not social post
             htmlFileName = "postRoute.html"; // Or 'createPost.html' ?
             targetElementId = "postBody";
-            // initializationFunction = initializePostRouteView; // Create this function if needed
+            initializationFunction = initializePostRouteView; // Create this function if needed
             break;
         case "singleCom":
             htmlFileName = "singleCommunity.html";
@@ -178,7 +178,7 @@ function initializeHomeView() {
     const postTextarea = document.querySelector('#homeBody .bg-white.rounded-lg.shadow-md textarea'); // Select the textarea
     const postButton = document.querySelector('#homeBody .bg-white.rounded-lg.shadow-md button.bg-blue-500'); // Select the post button
 
-    // --- Function to Fetch Posts (Same as before) ---
+    // --- Function to Fetch Posts ---
     const fetchPosts = async () => {
         if (!postsContainer) {
              console.error("Posts container not found in Home View!");
@@ -186,15 +186,31 @@ function initializeHomeView() {
          }
         postsContainer.innerHTML = '<p class="text-center text-gray-500">Loading posts...</p>'; // Loading state
 
-        try {
-            // !!! IMPORTANT !!! Update this URL to match your backend GET posts endpoint
-            const backendPostsUrl = 'http://localhost:3000/api/posts'; // Example URL
+        // --- Get token from sessionStorage ---
+        const accessToken = sessionStorage.getItem('accessToken'); // Or localStorage
 
+        if (!accessToken) {
+            // User is not logged in - redirect to login
+             console.log('No access token found. Redirecting to login.');
+             postsContainer.innerHTML = '<p class="text-red-500">You must be logged in to view the feed.</p>';
+             alert('You must be logged in.');
+             window.location.href = 'login.html'; // Redirect to your login page
+            return; // Stop fetching
+        }
+        // -------------------------------------
+
+        try {
+            const backendPostsUrl = 'http://localhost:3000/api/posts'; // Example URL
 
             const response = await fetch(backendPostsUrl, {
                 method: 'GET',
-                 headers: { 'Content-Type': 'application/json' }, // Good practice
-                credentials: true // Crucial for sending authentication cookies
+                headers: {
+                    'Content-Type': 'application/json',
+                    // --- Add Authorization header ---
+                    'Authorization': `Bearer ${accessToken}`
+                    // -------------------------------
+                },
+                // credentials: 'include' // Likely still needed if refresh token is HttpOnly cookie
             });
 
             if (response.ok) {
@@ -202,17 +218,20 @@ function initializeHomeView() {
                 console.log('Fetched posts:', posts);
                 renderPosts(posts); // Call the function to display the posts
             } else if (response.status === 401) {
-                console.error('Authentication failed in Home View. Redirecting to login.');
-                alert('Session expired or not logged in. Please log in again.');
-                window.location.href = 'login.html';
+                // --- Handle 401: Token expired or invalid ---
+                console.error('Authentication failed fetching posts. Token expired or invalid.');
+                sessionStorage.removeItem('accessToken'); // Clear the invalid token
+                alert('Session expired. Please log in again.');
+                window.location.href = 'login.html'; // Redirect
+                // -------------------------------------------
             } else {
                 const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-                 console.error('Failed to fetch posts in Home View:', response.status, errorData);
+                 console.error('Failed to fetch posts:', response.status, errorData);
                  postsContainer.innerHTML = `<p class="text-red-500">Error loading posts: ${errorData.message || 'Could not fetch posts.'}</p>`;
             }
 
         } catch (error) {
-            console.error('Network error fetching posts in Home View:', error);
+            console.error('Network error fetching posts:', error);
              postsContainer.innerHTML = `<p class="text-red-500">Network error loading posts. Please try again.</p>`;
         }
     };
@@ -265,101 +284,143 @@ function initializeHomeView() {
 
     // --- Function to Create a New Post (Same as before) ---
     const createPost = async () => {
-         if (!postTextarea || !postButton) {
-             console.error("Post creation elements not found in Home View!");
-             return;
-         }
+        if (!postTextarea || !postButton) {
+            console.error("Post creation elements not found in Home View!");
+            return;
+        }
 
-         const content = postTextarea.value.trim();
+        const content = postTextarea.value.trim();
 
-         if (content === '') {
-             alert('Post content cannot be empty.');
-             return;
-         }
+        if (content === '') {
+            alert('Post content cannot be empty.');
+            return;
+        }
 
-         postButton.disabled = true;
-         const originalButtonText = postButton.textContent;
-         postButton.textContent = 'Posting...';
+        // --- Get token from sessionStorage ---
+        const accessToken = sessionStorage.getItem('accessToken'); // Or localStorage
 
-         try {
-             // !!! IMPORTANT !!! Update this URL to match your backend POST create post endpoint
-             const backendCreatePostUrl = 'http://localhost:3000/api/posts'; // Example URL
-
-             const response = await fetch(backendCreatePostUrl, {
-                 method: 'POST',
-                 headers: { 'Content-Type': 'application/json' },
-                 body: JSON.stringify({ content: content }),
-                 credentials: true
-             });
-
-             if (response.ok) {
-                 console.log('Post created successfully.');
-                 postTextarea.value = ''; // Clear textarea
-                 fetchPosts(); // Refresh feed
-             } else if (response.status === 401) {
-                 console.error('Authentication failed while creating post in Home View. Redirecting to login.');
-                 alert('Session expired or not logged in. Please log in again.');
-                 window.location.href = 'login.html';
-             } else {
-                  const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-                 console.error('Failed to create post in Home View:', response.status, errorData);
-                 alert(errorData.message || 'Failed to create post.');
-             }
-
-         } catch (error) {
-             console.error('Network error creating post in Home View:', error);
-             alert('Network error. Could not create post.');
-         } finally {
-             postButton.disabled = false;
-             postButton.textContent = originalButtonText;
-         }
-    };
+        if (!accessToken) {
+            // User is not logged in - redirect to login
+             alert('You must be logged in to create a post.');
+             window.location.href = 'login.html'; // Redirect to your login page
+            return; // Stop creation attempt
+        }
+        // -------------------------------------
 
 
-    // --- Add Event Listener to Post Button AFTER HTML IS INJECTED ---
-    if (postButton) {
-        postButton.addEventListener('click', createPost);
-    } else {
-        console.error("Post button element not found in Home View!");
-    }
+        postButton.disabled = true;
+        const originalButtonText = postButton.textContent;
+        postButton.textContent = 'Posting...';
 
-    // --- Initial Fetch for Home View ---
-    fetchPosts(); // Fetch posts when the home view is initialized
+        try {
+            const backendCreatePostUrl = 'http://localhost:3000/api/posts'; // Example URL
+
+            const response = await fetch(backendCreatePostUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // --- Add Authorization header ---
+                    'Authorization': `Bearer ${accessToken}`
+                    // -------------------------------
+                },
+                body: JSON.stringify({ content: content }),
+                // credentials: 'include' // Likely still needed if refresh token is HttpOnly cookie
+            });
+
+            if (response.ok) {
+                console.log('Post created successfully.');
+                postTextarea.value = ''; // Clear textarea
+                fetchPosts(); // Refresh feed
+            } else if (response.status === 401) {
+                // --- Handle 401: Token expired or invalid ---
+                console.error('Authentication failed creating post. Token expired or invalid.');
+                sessionStorage.removeItem('accessToken'); // Clear the invalid token
+                alert('Session expired. Please log in again.');
+                window.location.href = 'login.html'; // Redirect
+                // -------------------------------------------
+            } else {
+                 const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                console.error('Failed to create post:', response.status, errorData);
+                alert(errorData.message || 'Failed to create post.');
+            }
+
+        } catch (error) {
+            console.error('Network error creating post:', error);
+            alert('Network error. Could not create post.');
+        } finally {
+            postButton.disabled = false;
+            postButton.textContent = originalButtonText;
+        }
+   };
+
+   // --- Add Event Listener to Post Button (No changes needed here) ---
+   if (postButton) {
+       postButton.addEventListener('click', createPost);
+   } else {
+       console.error("Post button element not found in Home View!");
+   }
+
+   // --- Initial Fetch for Home View ---
+   // Call fetchPosts when the home view is initialized (fetchPosts handles auth check now)
+   fetchPosts();
 
 }
+
 
 
 // --- Initialization Function for the Settings View ---
 // This function contains the logic for the logout button specifically
 function initializeSettingsView() {
     console.log("Initializing Settings View...");
-    // Get a reference to the logout button *within the newly injected HTML*
     const logoutButton = document.getElementById('logoutButton');
 
     if (logoutButton) {
         logoutButton.addEventListener('click', async () => {
             console.log("Logout button clicked.");
+
+            // --- Clear token from sessionStorage on logout ---
+            sessionStorage.removeItem('accessToken'); // Or localStorage
+            // ---------------------------------------------
+
             try {
-                // Replace with your backend URL
                 const backendLogoutUrl = 'http://localhost:3000/login/logout'; // Corrected URL
 
                 const response = await fetch(backendLogoutUrl, {
                     method: 'POST',
-                    credentials: "include" // Send cookies
+                    // --- You might still need credentials: 'include' here ---
+                    // If your backend logout specifically clears the HttpOnly refresh token cookie,
+                    // the browser needs to send it with this request.
+                    credentials: "include"
+                    // -----------------------------------------------------
+                    // No Authorization header needed for logout endpoint itself,
+                    // as backend verifyJWT would check for refreshToken cookie or header (if you changed it)
                 });
 
-                if (response.ok) {
+                // Logout endpoint typically returns 200 or 204 on success
+                if (response.ok || response.status === 204) { // Check for 204 No Content too
                     console.log('Logout successful on the server.');
-                    window.location.href = 'login.html'; // Redirect to login page
-                } else {
-                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    // Token is already cleared from storage, now redirect
+                    window.location.href = 'login.html';
+                } else if (response.status === 401) {
+                    // Even if token wasn't there, logout should ideally still work,
+                    // but if it's protected by verifyJWT that expects *some* credential:
+                     console.error('Logout failed or session already expired:', response.status);
+                     // Token already removed, just redirect
+                     alert('Session expired or logout failed.');
+                     window.location.href = 'login.html';
+                }
+                 else {
+                     // Handle other logout errors
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown logout error' }));
                     console.error('Logout failed on the server:', response.status, errorData);
                     alert(errorData.message || 'Logout failed.');
-                }
+                 }
 
             } catch (error) {
                 console.error('Network error during logout:', error);
                 alert('Could not connect to the server to log out.');
+                 // Even on network error, clear token from storage for safety
+                 sessionStorage.removeItem('accessToken'); // Or localStorage
             }
         });
     } else {
@@ -453,6 +514,183 @@ async function fetchAndInjectPartial(htmlFileName, targetElementId, targetContai
          targetContainer.innerHTML = `<p class="text-center text-red-500">Error loading content.</p>`;
      }
 }
+
+// This code goes into your script.js file
+
+// ... (previous functions like switchViews, initializeHomeView, initializeSettingsView, etc.) ...
+
+// --- Initialization Function for the Post Route View ---
+function initializePostRouteView() {
+    console.log("Initializing Post Route View...");
+
+    const newRouteForm = document.getElementById('newRouteForm'); // Get form by ID
+    const getLocationButton = document.getElementById('getLocationButton'); // Get the location button
+    const locationStatusSpan = document.getElementById('locationStatus'); // Get the status span
+    const geoLatitudeInput = document.getElementById('geoLatitude'); // Get the hidden latitude input
+    const geoLongitudeInput = document.getElementById('geoLongitude'); // Get the hidden longitude input
+
+
+    if (!newRouteForm || !getLocationButton || !locationStatusSpan || !geoLatitudeInput || !geoLongitudeInput) {
+        console.error("Required elements for Post Route View not found!");
+        // Check console to see which element was missing
+        return;
+    }
+
+    // --- Add event listener to the Get Location button ---
+    getLocationButton.addEventListener('click', () => {
+        // Check if the browser supports Geolocation
+        if (!navigator.geolocation) {
+            locationStatusSpan.textContent = 'Geolocation is not supported by your browser.';
+            console.error('Geolocation not supported');
+            return;
+        }
+
+        locationStatusSpan.textContent = 'Getting location...';
+        getLocationButton.disabled = true; // Disable button while getting location
+
+        // --- Call the Geolocation API ---
+        navigator.geolocation.getCurrentPosition(
+            (position) => { // Success callback
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                console.log(`Location captured: Lat ${latitude}, Lon ${longitude}`);
+
+                // Populate the hidden input fields
+                geoLatitudeInput.value = latitude;
+                geoLongitudeInput.value = longitude;
+
+                locationStatusSpan.textContent = `Location captured: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                locationStatusSpan.style.color = 'green'; // Optional: change color on success
+                getLocationButton.disabled = false; // Re-enable button
+
+            },
+            (error) => { // Error callback
+                getLocationButton.disabled = false; // Re-enable button
+
+                let errorMessage = 'Error getting location.';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Geolocation permission denied. Please allow location access in your browser settings.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'Location information is unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'The request to get user location timed out.';
+                        break;
+                    case error.UNKNOWN_ERROR:
+                        errorMessage = 'An unknown error occurred getting location.';
+                        break;
+                }
+                locationStatusSpan.textContent = errorMessage;
+                locationStatusSpan.style.color = 'red'; // Optional: change color on error
+                console.error('Geolocation error:', error);
+
+                // Clear hidden inputs if location fails
+                geoLatitudeInput.value = '';
+                geoLongitudeInput.value = '';
+            },
+            { // Options for getCurrentPosition
+                enableHighAccuracy: true, // Request high accuracy if available
+                timeout: 10000, // Timeout after 10 seconds
+                maximumAge: 0 // Don't use a cached position
+            }
+        );
+    });
+
+    // --- Keep the form submit listener as before ---
+    newRouteForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const submitButton = newRouteForm.querySelector('button[type="submit"]');
+         if (submitButton) {
+             submitButton.disabled = true;
+             const originalButtonText = submitButton.textContent;
+             submitButton.textContent = 'Posting Route...';
+         }
+
+        const formData = new FormData(newRouteForm); // FormData includes the hidden inputs
+
+        // --- Validation Check for Coordinates (Optional but Recommended) ---
+        // If location coordinates are mandatory for a route:
+        const latitude = formData.get('latitude'); // Get value from FormData
+        const longitude = formData.get('longitude'); // Get value from FormData
+
+        // Basic check: ensure they are not empty strings if location was attempted
+        // You might want more robust validation (e.g., isNaN) on the backend too
+        if (!latitude || !longitude) {
+             // User didn't click 'Get Location' or it failed and is mandatory
+             alert('Please get your current location using the button.');
+              if (submitButton) {
+                 submitButton.disabled = false;
+                 submitButton.textContent = originalButtonText;
+             }
+             return; // Stop the submission
+        }
+         // ------------------------------------------------------------------
+
+
+        // !!! IMPORTANT !!! Update this URL to match your backend POST create route endpoint
+        const backendCreateRouteUrl = 'http://localhost:3000/route/'; // Example URL
+
+        try {
+            const response = await fetch(backendCreateRouteUrl, {
+                method: 'POST',
+                body: formData, // FormData includes all fields (text, file, hidden lat/lon)
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json().catch(() => ({})); // Handle empty JSON response
+                console.log('Route created successfully:', result);
+                alert('Route created successfully!');
+                newRouteForm.reset();
+                // Reset location status display
+                locationStatusSpan.textContent = '';
+                locationStatusSpan.style.color = '';
+
+                switchViews('routes'); // Redirect
+
+            } else if (response.status === 401) {
+                 console.error('Authentication failed while creating route. Redirecting to login.');
+                 alert('Session expired or not logged in. Please log in again.');
+                 window.location.href = 'login.html';
+            }
+             else {
+                 const errorData = await response.json().catch(() => ({ message: `Error: ${response.status} ${response.statusText}` }));
+                 console.error('Failed to create route:', response.status, errorData);
+                 alert(errorData.message || 'Failed to create route.');
+              }
+
+        } catch (error) {
+            console.error('Network error creating route:', error);
+            alert('Network error. Could not connect to the server to create the route.');
+        } finally {
+             if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+             }
+        }
+    });
+
+    console.log("Post Route View initialization complete.");
+}
+
+// ... (Keep your switchViews, initializeHomeView, initializeSettingsView, switchTab, toggleDeleteDialog functions) ...
+
+// Ensure the 'post' case in switchViews calls initializePostRouteView
+/*
+async function switchViews(view) {
+    // ...
+    case "post":
+        htmlFileName = "postRoute.html";
+        targetElementId = "postBody";
+        initializationFunction = initializePostRouteView; // Make sure this is set
+        break;
+    // ...
+}
+*/
 
 
 // You might also need initialization functions for other views if they have specific JS logic:
