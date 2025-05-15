@@ -117,8 +117,13 @@ export const createRoute = async (req, res) => {
         const uploadedImagesInfo = req.files && req.files.images ? req.files.images : [];
         const uploadedVideosInfo = req.files && req.files.videos ? req.files.videos : [];
 
-        const imageUrls = uploadedImagesInfo.map(fileInfo => fileInfo.path || fileInfo.location).filter(Boolean);
-        const videoUrls = uploadedVideosInfo.map(fileInfo => fileInfo.path || fileInfo.location).filter(Boolean);
+        const imageUrls = uploadedImagesInfo.map(fileInfo => {
+             return path.relative(imagesBaseDir, fileInfo.path);
+        }).filter(Boolean);
+
+        const videoUrls = uploadedVideosInfo.map(fileInfo => {
+             return path.relative(videosBaseDir, fileInfo.path);
+        }).filter(Boolean);
 
 
         const newRouteData = {
@@ -151,11 +156,9 @@ export const createRoute = async (req, res) => {
 
     } catch (error) {
         console.error('Error in createRoute controller:', error);
-
         res.status(500).json({ message: 'Internal server error during route creation.' });
     }
 };
-
 import fs from 'fs';
 import path from 'path';
 
@@ -188,7 +191,6 @@ const deleteRouteDB = async (routeId) => {
         throw error;
     }
 };
-
 export const deleteRoute = async (req, res) => {
     try {
         const routeId = req.params.id;
@@ -209,19 +211,38 @@ export const deleteRoute = async (req, res) => {
             return res.status(403).json({ message: 'Forbidden: Only the creator can delete this route.' });
         }
 
-        const safeTitleFolderName = routeToDelete.title.replace(/\s+/g, '_').replace(/[^\w-]/g, '').toLowerCase();
-        const safeUserIdFolderName = routeToDelete.creatorId.toString().replace(/\s+/g, '_').replace(/[^\w-]/g, '');
+        // Recopilar todas las rutas de archivos (relativas) de imágenes y videos
+        const filesToDeletePhysically = [...routeToDelete.images, ...routeToDelete.videos];
 
-        const imagesFolderPath = path.join(imagesBaseDir, safeUserIdFolderName, safeTitleFolderName);
-        const videosFolderPath = path.join(videosBaseDir, safeUserIdFolderName, safeTitleFolderName);
+        // Eliminar archivos físicos (asíncronamente)
+        if (filesToDeletePhysically.length > 0) {
+             filesToDeletePhysically.forEach(filePath => {
+                 // Necesitamos saber si es una imagen o un video para usar la base dir correcta
+                 // Verificamos en qué array estaba originalmente la ruta (más robusto)
+                 const isImage = routeToDelete.images.includes(filePath);
+                 const isVideo = routeToDelete.videos.includes(filePath);
 
-        fs.rm(imagesFolderPath, { recursive: true, force: true }, (err) => {
-            if (err) console.error('Error deleting images folder:', imagesFolderPath, err);
-        });
+                 let fullPhysicalPath = null;
+                 if (isImage) {
+                      fullPhysicalPath = path.join(imagesBaseDir, filePath);
+                 } else if (isVideo) {
+                      fullPhysicalPath = path.join(videosBaseDir, filePath);
+                 } else {
+                      // Esto no debería pasar si las rutas en DB son correctas y corresponden a los arrays
+                      console.error('Path in DB not found in original route images/videos arrays:', filePath);
+                      return; // No intentes eliminar si no sabemos su base dir
+                 }
 
-        fs.rm(videosFolderPath, { recursive: true, force: true }, (err) => {
-             if (err) console.error('Error deleting videos folder:', videosFolderPath, err);
-        });
+                 if (fullPhysicalPath) {
+                     fs.promises.unlink(fullPhysicalPath).catch(err => {
+                          console.error('Error deleting file during delete:', fullPhysicalPath, err);
+                     });
+                 }
+             });
+        }
+
+        // La eliminación de carpetas padre vacías no se maneja aquí. Podría requerir un proceso de limpieza separado.
+
 
         const deletedCount = await deleteRouteDB(routeId);
 
@@ -436,7 +457,6 @@ const updateRouteDB = async (routeId, updateOperators) => {
         throw error;
     }
 };
-
 export const updateRoute = async (req, res) => {
     try {
         const routeId = req.params.id;
@@ -462,6 +482,16 @@ export const updateRoute = async (req, res) => {
         const pullOperator = {};
         const pushOperator = {};
 
+        const EDITABLE_ROUTE_FIELDS = [
+            'title',
+            'description',
+            'difficultyLevel',
+            'geoLocation',
+            'accessCost',
+            'climbType',
+            'recommendedGear',
+        ];
+
         for (const field of EDITABLE_ROUTE_FIELDS) {
             if (req.body[field] !== undefined) {
                 setOperator[field] = req.body[field];
@@ -478,8 +508,13 @@ export const updateRoute = async (req, res) => {
         const uploadedImagesInfo = req.files && req.files.images ? req.files.images : [];
         const uploadedVideosInfo = req.files && req.files.videos ? req.files.videos : [];
 
-        const imageUrls = uploadedImagesInfo.map(fileInfo => fileInfo.path || fileInfo.location).filter(Boolean);
-        const videoUrls = uploadedVideosInfo.map(fileInfo => fileInfo.path || fileInfo.location).filter(Boolean);
+        const newImageUrls = uploadedImagesInfo.map(fileInfo => {
+             return path.relative(imagesBaseDir, fileInfo.path);
+        }).filter(Boolean);
+
+        const newVideoUrls = uploadedVideosInfo.map(fileInfo => {
+             return path.relative(videosBaseDir, fileInfo.path);
+        }).filter(Boolean);
 
         if (newImageUrls.length > 0) {
              pushOperator.images = { $each: newImageUrls };
@@ -502,16 +537,52 @@ export const updateRoute = async (req, res) => {
         }
 
         if (Object.keys(updateOperators).length === 0) {
-             return res.status(200).json({ message: 'No updatable fields provided.' });
+             // Si no hay operadores de actualización pero se subieron nuevos archivos, esos archivos son huérfanos.
+             // Necesitamos borrarlos.
+             if (newImageUrls.length > 0 || newVideoUrls.length > 0) {
+                 // Se eliminan los archivos físicos que Multer guardó
+                 uploadedImagesInfo.forEach(fileInfo => {
+                     fs.promises.unlink(fileInfo.path || fileInfo.location).catch(err => {
+                         console.error('Error deleting unused uploaded new image:', fileInfo.path, err);
+                     });
+                 });
+                 uploadedVideosInfo.forEach(fileInfo => {
+                     fs.promises.unlink(fileInfo.path || fileInfo.location).catch(err => {
+                         console.error('Error deleting unused uploaded new video:', fileInfo.path, err);
+                     });
+                 });
+             }
+             return res.status(200).json({ message: 'No updatable fields or new files provided.' });
         }
 
+        // Eliminar archivos físicos antiguos (asíncronamente)
+        // Iterar sobre los paths de los archivos a eliminar (que son las rutas relativas guardadas en DB)
         if (filesToDelete.length > 0) {
             filesToDelete.forEach(filePath => {
-                 fs.promises.unlink(filePath).catch(err => {
-                     console.error('Error deleting old file:', filePath, err);
-                 });
+                 // Necesitamos saber si es una imagen o un video para usar la base dir correcta
+                 // Buscamos el path en los arrays originales del documento de la DB
+                 const isImage = routeToUpdate.images.includes(filePath);
+                 const isVideo = routeToUpdate.videos.includes(filePath);
+
+                 let fullPhysicalPath = null;
+                 if (isImage) {
+                     fullPhysicalPath = path.join(imagesBaseDir, filePath);
+                 } else if (isVideo) {
+                      fullPhysicalPath = path.join(videosBaseDir, filePath);
+                 } else {
+                     // Si el path a eliminar no está en los arrays originales, es un error en la lista del frontend
+                     console.error('Path to delete not found in original route images/videos arrays:', filePath);
+                     return;
+                 }
+
+                 if (fullPhysicalPath) {
+                     fs.promises.unlink(fullPhysicalPath).catch(err => {
+                         console.error('Error deleting old file:', fullPhysicalPath, err);
+                     });
+                 }
             });
         }
+
 
         const modifiedCount = await updateRouteDB(routeId, updateOperators);
 
@@ -527,6 +598,17 @@ export const updateRoute = async (req, res) => {
 
     } catch (error) {
         console.error('Error in updateRoute controller:', error);
+        // Si ocurre un error DESPUÉS de que Multer guardó archivos, esos archivos son huérfanos.
+        // Necesitamos limpiarlos.
+        if (req.files) {
+            const uploadedFiles = [...(req.files.images || []), ...(req.files.videos || [])];
+            uploadedFiles.forEach(fileInfo => {
+                 const orphanedPhysicalPath = fileInfo.path || fileInfo.location;
+                 fs.promises.unlink(orphanedPhysicalPath).catch(cleanupErr => {
+                      console.error('Error cleaning up orphaned uploaded file after controller error:', orphanedPhysicalPath, cleanupErr);
+                 });
+            });
+        }
         res.status(500).json({ message: 'Internal server error during route update.' });
     }
 };
