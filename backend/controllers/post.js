@@ -192,113 +192,38 @@ const findUserLikedPostIdsDB = async (userId) => {
 };
 
 
-// export const createPost = async (req, res) => {
-//     try {
-//         const creatorId = req.user.userId;
-
-//         const {
-//             title,
-//             routeId,
-//         } = req.body;
-
-//         const photoFile = req.file;
-
-//         if (!title || !photoFile) {
-//             return res.status(400).json({ message: 'Missing required post fields (title, photo file).' });
-//         }
-
-//         const photoPath = photoFile.path || photoFile.location;
-
-//         let routeObjectId = null;
-//         if (routeId) {
-//             if (!ObjectId.isValid(routeId)) {
-//                 return res.status(400).json({ message: 'Invalid route ID format provided.' });
-//             }
-//             routeObjectId = new ObjectId(routeId);
-//         }
-
-//         const newPostData = {
-//             title,
-//             photo: photoPath,
-//             creatorId: new ObjectId(creatorId),
-//             routeId: routeObjectId,
-//         };
-
-//         const insertionResult = await createPostDB(newPostData);
-
-//         if (insertionResult && insertionResult.acknowledged) {
-//             res.status(201).json({
-//                 message: 'Post created successfully.',
-//                 postId: insertionResult.insertedId,
-//             });
-//         } else {
-//              console.error('Post creation failed: DB did not acknowledge insertion.');
-//              res.status(500).json({ message: 'Post creation failed due to database issue.' });
-//         }
-
-//     } catch (error) {
-//         console.error('Error in createPost controller:', error);
-//         res.status(500).json({ message: 'Internal server error during post creation.' });
-//     }
-// };
 export const createPost = async (req, res) => {
     try {
         const creatorId = req.user.userId;
 
-        // --- Read data from req.body and req.file ---
-        // Frontend sends text content as 'title'
-        const { title, latitude, longitude } = req.body; // Read title, lat, lon from body
-        const photoFile = req.file; // Photo file is in req.file (due to Multer .single('photo'))
-        // ---------------------------------------------
+        const {
+            title,
+            routeId,
+        } = req.body;
 
-        // Validation: Require title (content) OR a photo file
-        if (!title && !photoFile) {
-            return res.status(400).json({ message: 'Post must have content or a photo.' });
+        const photoFile = req.file;
+
+        if (!title || !photoFile) {
+            return res.status(400).json({ message: 'Missing required post fields (title, photo file).' });
         }
 
-        let photoPublicUrl = null;
-        if (photoFile) {
-            // --- Construct the public URL path for the photo ---
-            // Assuming static serving is configured to serve files from backend/images/posts
-            // under the URL path /images/posts/.
-            // Multer's disk storage provides fileInfo.destination and fileInfo.filename.
-            // Example: fileInfo.destination could be 'images/posts/userId', filename 'post-...'
-            // Need to get the path relative to the static serving base ('images/posts')
-            // Adjust this construction based on your Multer destination setup if needed.
+        // Guarda la ruta relativa desde imagesBaseDir
+        const photoPathToStore = path.relative(imagesBaseDir, photoFile.path);
 
-            const relativeUploadPath = path.relative(path.join(__dirname, '..', 'images', 'posts'), photoFile.destination);
-
-            // Construct the public URL path
-            // Assuming backend is on localhost:3000 and serves from /images/posts
-            photoPublicUrl = `http://localhost:3000/images/posts/<span class="math-inline">\{relativeUploadPath\}/</span>{photoFile.filename}`;
-            // Or just the path part: `/images/posts/<span class="math-inline">\{relativeUploadPath\}/</span>{photoFile.filename}`
-            // Storing the full URL is often safer.
-            // --------------------------------------------------------------------
+        let routeObjectId = null;
+        if (routeId) {
+            if (!ObjectId.isValid(routeId)) {
+                if (photoFile) fs.promises.unlink(photoFile.path).catch(err => console.error('Error cleaning up photo after validation error:', err));
+                return res.status(400).json({ message: 'Invalid route ID format provided.' });
+            }
+            routeObjectId = new ObjectId(routeId);
         }
-
-        // Optional: Handle routeId if you allow linking posts to routes
-        // const { routeId } = req.body; // Read routeId from body if sent by frontend form
-        // let routeObjectId = null;
-        // if (routeId) {
-        //     if (!ObjectId.isValid(routeId)) {
-        //         // If photo was uploaded before this check, consider deleting it here
-        //         if (photoFile) fs.promises.unlink(photoFile.path).catch(err => console.error('Error cleaning up photo:', err));
-        //         return res.status(400).json({ message: 'Invalid route ID format provided.' });
-        //     }
-        //     routeObjectId = new ObjectId(routeId);
-        // }
-
 
         const newPostData = {
-            title: title || '', // Save the text content as title
-            photo: photoPublicUrl, // Save the public URL path for the photo
-            date: new Date(), // Add a creation date
-            likes: 0, // Initialize likes count
-            creatorId: new ObjectId(creatorId), // Save the creator's ID
-            // routeId: routeObjectId, // Save linked route ID if applicable
-            // Add latitude/longitude if you want to save post location
-            latitude: latitude ? parseFloat(latitude) : undefined, // Save location if provided
-            longitude: longitude ? parseFloat(longitude) : undefined, // Save location if provided
+            title,
+            photo: photoPathToStore,
+            creatorId: new ObjectId(creatorId),
+            routeId: routeObjectId,
         };
 
         const insertionResult = await createPostDB(newPostData);
@@ -307,23 +232,20 @@ export const createPost = async (req, res) => {
             res.status(201).json({
                 message: 'Post created successfully.',
                 postId: insertionResult.insertedId,
-                // Optionally return the created post data including public photo URL
-                post: { _id: insertionResult.insertedId, ...newPostData }
             });
         } else {
              console.error('Post creation failed: DB did not acknowledge insertion.');
-              // If photo was uploaded before this error, consider deleting it here
-              if (photoFile) fs.promises.unlink(photoFile.path).catch(err => console.error('Error cleaning up photo:', err));
+              if (photoFile) fs.promises.unlink(photoFile.path).catch(err => console.error('Error cleaning up photo after DB error:', err));
              res.status(500).json({ message: 'Post creation failed due to database issue.' });
         }
 
     } catch (error) {
         console.error('Error in createPost controller:', error);
-         // If photo was uploaded before an error, consider deleting it here
          if (req.file) fs.promises.unlink(req.file.path).catch(err => console.error('Error cleaning up photo on controller error:', err));
-         res.status(500).json({ message: 'Internal server error during post creation.' });
+        res.status(500).json({ message: 'Internal server error during post creation.' });
     }
 };
+
 
 export const getPosts = async (req, res) => {
   try {
@@ -350,28 +272,26 @@ export const getPosts = async (req, res) => {
       routeId: 1
     };
 
-    const db = getDatabase(); // Get DB connection
+    const db = getDatabase();
     const postsCollection = db.collection(POSTS_COLLECTION);
 
     const posts = await postsCollection.aggregate([
-        { $sort: sortOptions }, // Apply sorting first
-        { $skip: skip }, // Apply pagination skip
-        { $limit: limit }, // Apply pagination limit
-        { $project: projectionOptions }, // Apply projection
+        { $sort: sortOptions },
+        { $skip: skip },
+        { $limit: limit },
+        { $project: projectionOptions },
 
-        // --- Aggregation to join with the users collection ---
         {
             $lookup: {
-                from: 'users', // The collection to join with (your users collection name)
-                localField: 'creatorId', // Field from the posts collection
-                foreignField: '_id', // Field from the users collection
-                as: 'creatorInfo' // Output array field name (will contain the matching user document)
+                from: 'users',
+                localField: 'creatorId',
+                foreignField: '_id',
+                as: 'creatorInfo'
             }
         },
         {
-            $unwind: { path: '$creatorInfo', preserveNullAndEmptyArrays: true } // Deconstruct the creatorInfo array (optional: handle cases where user might be missing)
+            $unwind: { path: '$creatorInfo', preserveNullAndEmptyArrays: true }
         },
-        // --- Project the final output shape, including user info ---
         {
             $project: {
                 _id: 1,
@@ -381,17 +301,15 @@ export const getPosts = async (req, res) => {
                 likes: 1,
                 creatorId: 1,
                 routeId: 1,
-                latitude: 1, // Include if projected initially
-                longitude: 1, // Include if projected initially
-                user: { // Create a 'user' object in the response
+                latitude: 1,
+                longitude: 1,
+                user: {
                     _id: '$creatorInfo._id',
-                    username: '$creatorInfo.username', // Project username
-                    avatarUrl: '$creatorInfo.avatarUrl', // Project avatar URL (assuming user model has this)
-                    // Add other non-sensitive user fields needed
+                    username: '$creatorInfo.username',
+                    avatarUrl: '$creatorInfo.avatarUrl',
                 }
             }
         }
-        // ------------------------------------------------------------
     ]).toArray();
 
     res.status(200).json(posts);
@@ -466,16 +384,19 @@ export const updatePost = async (req, res) => {
         const deleteExistingPhoto = req.body.deleteExistingPhoto === 'true';
 
         if (newPhotoFile) {
-            setOperator.photo = newPhotoFile.path || newPhotoFile.location;
+            const newPhotoPathToStore = path.relative(imagesBaseDir, newPhotoFile.path);
+            setOperator.photo = newPhotoPathToStore;
              if (postToUpdate.photo) {
-                 fs.promises.unlink(postToUpdate.photo).catch(err => {
-                     console.error('Error deleting old post photo:', postToUpdate.photo, err);
+                 const oldPhotoPhysicalPath = path.join(imagesBaseDir, postToUpdate.photo);
+                 fs.promises.unlink(oldPhotoPhysicalPath).catch(err => {
+                     console.error('Error deleting old post photo:', oldPhotoPhysicalPath, err);
                  });
             }
         } else if (deleteExistingPhoto && postToUpdate.photo) {
             unsetOperator.photo = "";
-             fs.promises.unlink(postToUpdate.photo).catch(err => {
-                 console.error('Error deleting post photo marked for deletion:', postToUpdate.photo, err);
+             const oldPhotoPhysicalPath = path.join(imagesBaseDir, postToUpdate.photo);
+             fs.promises.unlink(oldPhotoPhysicalPath).catch(err => {
+                 console.error('Error deleting post photo marked for deletion:', oldPhotoPhysicalPath, err);
              });
         }
 
@@ -488,8 +409,9 @@ export const updatePost = async (req, res) => {
 
         if (Object.keys(updateOperators).length === 0) {
              if (newPhotoFile) {
-                 fs.promises.unlink(newPhotoFile.path || newPhotoFile.location).catch(err => {
-                      console.error('Error deleting unused uploaded new photo:', newPhotoFile.path, err);
+                 const newPhotoPhysicalPath = newPhotoFile.path || newPhotoFile.location;
+                 fs.promises.unlink(newPhotoPhysicalPath).catch(err => {
+                      console.error('Error deleting unused uploaded new photo:', newPhotoPhysicalPath, err);
                  });
              }
              return res.status(200).json({ message: 'No updatable fields or new photo provided.' });
@@ -506,6 +428,12 @@ export const updatePost = async (req, res) => {
 
     } catch (error) {
         console.error('Error in updatePost controller:', error);
+         if (req.file) {
+              const orphanedPhotoPhysicalPath = req.file.path;
+              fs.promises.unlink(orphanedPhotoPhysicalPath).catch(cleanupErr => {
+                   console.error('Error cleaning up orphaned uploaded photo after controller error:', orphanedPhotoPhysicalPath, cleanupErr);
+              });
+         }
         res.status(500).json({ message: 'Internal server error during post update.' });
     }
 };
@@ -531,8 +459,9 @@ export const deletePost = async (req, res) => {
         }
 
         if (postToDelete.photo) {
-             fs.promises.unlink(postToDelete.photo).catch(err => {
-                 console.error('Error deleting post photo during delete:', postToDelete.photo, err);
+             const photoPhysicalPath = path.join(imagesBaseDir, postToDelete.photo);
+             fs.promises.unlink(photoPhysicalPath).catch(err => {
+                 console.error('Error deleting post photo during delete:', photoPhysicalPath, err);
              });
         }
 
