@@ -1,10 +1,12 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-
-const imagesBaseDir = path.join(process.cwd(), 'images');
-const videosBaseDir = path.join(process.cwd(), 'videos');
-
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const imagesBaseDir = path.join(__dirname, '..', 'images');
+const videosBaseDir = path.join(__dirname, '..', 'videos');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
