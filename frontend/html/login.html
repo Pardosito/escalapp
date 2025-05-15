@@ -21,7 +21,7 @@
                 <div>
                   <label for="emailOrUsername" class="block text-sm font-medium text-green-400">Email address / Username</label>
                   <div class="mt-2">
-                    <input type="text" name="emailOrUsername" id="emailOrUsername" required class="block w-full rounded-md border-0 bg-gray-300/50 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-600 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6">
+                    <input type="text" name="emailOrUsername" id="usernameOrEmail" required class="block w-full rounded-md border-0 bg-gray-300/50 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-600 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6">
                   </div>
                 </div>
 
@@ -62,59 +62,66 @@
       loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const emailOrUsernameInput = document.getElementById('emailOrUsername');
-        const passwordInput = document.getElementById('password');
+        const identifierInput = document.getElementById('usernameOrEmail'); // Get input elements by ID
+    const passwordInput = document.getElementById('password');
 
-        const emailOrUsername = emailOrUsernameInput.value;
-        const password = passwordInput.value;
+    const identifier = identifierInput ? identifierInput.value : '';
+    const password = passwordInput ? passwordInput.value : '';
 
-        if (!emailOrUsername || !password) {
-          messageElement.textContent = 'Please enter both username/email and password.';
-          return;
+    if (!identifier || !password) {
+        alert('Please enter both username/email and password.');
+        return;
+    }
+
+    // --- Data to send in the request body (as a JavaScript object) ---
+    const loginData = {
+        identifier: identifier,
+        password: password
+    };
+    // -----------------------------------------------------------------
+
+    // !!! IMPORTANT !!! Update this URL to match your backend POST login endpoint
+    const backendLoginUrl = 'http://localhost:3000/login/login'; // This URL likely remains the same, but method changes
+
+    fetch(backendLoginUrl, {
+        method: 'POST', // --- CHANGE THIS TO POST ---
+        headers: {
+            'Content-Type': 'application/json' // --- Add this header to indicate JSON body ---
+        },
+        body: JSON.stringify(loginData), // --- Send the data in the request body as a JSON string ---
+        // --- Keep credentials: 'include' if backend uses HttpOnly refresh token cookie ---
+        credentials: 'include'
+        // --------------------------------------------------------------------------------
+    })
+    .then(response => {
+        // --- Handle the response from the backend ---
+        // Assuming backend returns 200 OK on success and sets cookies
+        // And 401 on invalid credentials
+        if (response.ok) {
+            // Login successful - response headers should contain Set-Cookie
+            console.log('Login successful. Cookies should be set.');
+             // Redirect to index.html (your main app page)
+             window.location.href = 'index.html'; // Redirect to the main application page
+
+        } else if (response.status === 401) {
+            console.error('Login failed: Invalid credentials.');
+            alert('Invalid username/email or password.');
+        } else {
+            // Handle other potential errors (e.g., 500 Internal Server Error)
+            response.json().then(errorData => {
+                console.error('Login failed:', response.status, errorData);
+                alert(errorData.message || 'Login failed. Please try again.');
+            }).catch(() => {
+                 console.error('Login failed:', response.status, response.statusText);
+                 alert(`Login failed. Status: ${response.status}`);
+            });
         }
-
-        // Create the data object
-        const userData = {
-          emailOrUsername: emailOrUsername, // Match backend expected key
-          password: password // Match backend expected key
-        };
-
-        // --- Build the URL with query parameters for GET ---
-        const backendBaseUrl = 'http://localhost:3000/login'; // <<<--- CHANGE THIS TO YOUR BACKEND BASE URL
-        const queryParams = new URLSearchParams(userData).toString(); // Encode data into query string
-        const backendUrlWithParams = `${backendBaseUrl}?${queryParams}`;
-        // ---------------------------------------------------
-
-        try {
-          // --- Use GET method ---
-          const response = await fetch(backendUrlWithParams, {
-              method: 'GET'
-              // No 'Content-Type' header and no 'body' for GET requests
-          });
-          // -----------------------
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Login successful:', data);
-            messageElement.textContent = 'Login successful!';
-            messageElement.style.color = 'green';
-
-            setTimeout(() => {
-                 window.location.href = 'index.html';
-            }, 1000);
-
-          } else {
-            const errorData = await response.json();
-            console.error('Login failed:', response.status, errorData);
-            messageElement.textContent = errorData.message || 'Login failed. Please check your credentials.';
-            messageElement.style.color = 'red';
-          }
-
-        } catch (error) {
-          console.error('Network error during login:', error);
-          messageElement.textContent = 'Could not connect to the server. Please try again later.';
-          messageElement.style.color = 'red';
-        }
+    })
+    .catch(error => {
+        // Handle network errors (e.g., server is down)
+        console.error('Network error during login:', error);
+        alert('Network error. Could not connect to the server.');
+    });
       });
     </script>
 </body>

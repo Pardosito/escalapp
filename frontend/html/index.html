@@ -67,21 +67,31 @@
 
                 <!--Publicacion-->
                 <div class="bg-white rounded-lg shadow-md mb-6">
-                    <textarea 
-                        placeholder="Share your climbing experience..." 
+                    <textarea
+                        id="postContent"  placeholder="Share your climbing experience..."
                         class="w-full p-4 rounded-t-lg resize-none focus:outline-none"
                     ></textarea>
-                    <div class="flex justify-between p-4 border-t">
+                
+                    <img id="postImagePreview" src="#" alt="Image preview" class="hidden w-full max-h-64 object-cover mt-2 rounded-lg">
+                    <div id="postFileSelectedName" class="text-sm text-gray-500 mt-1 px-4 hidden"></div> <input type="hidden" id="postGeoLatitude" name="latitude"> <input type="hidden" id="postGeoLongitude" name="longitude"> <input type="file" id="postImageUpload" name="postImage" accept="image/*" class="hidden"> <div class="flex justify-between p-4 border-t">
                         <div>
-                            <button class="mr-2 px-3 py-1 border rounded-md hover:bg-gray-100">📷 Photo</button>
-                            <button class="px-3 py-1 border rounded-md hover:bg-gray-100">📍 Location</button>
-                        </div>
-                        <button class="bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600">Post</button>
+                            <label for="postImageUpload" id="postPhotoButton" class="mr-2 px-3 py-1 border rounded-md hover:bg-gray-100 cursor-pointer">📷 Photo</label>
+                
+                            <button type="button" id="postLocationButton" class="px-3 py-1 border rounded-md hover:bg-gray-100">📍 Location</button>
+                            <span id="postLocationStatus" class="text-sm text-gray-600 ml-2"></span> </div>
+                
+                        <button type="submit" id="createPostButton" class="bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600">Post</button> 
                     </div>
                 </div>
+                
+                <div class="space-y-6">
+                    </div>
+                
+                <div class="space-y-6">
+                    </div>
 
                 <!--Feed-->
-                <div class="space-y-6">
+                <div class="space-y-6" id="postsFeedContainer">
 
                     <div class="bg-white rounded-lg shadow-md">
                         <div class="p-4">

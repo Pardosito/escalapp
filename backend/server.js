@@ -1,12 +1,16 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import { connectToDatabase } from './controllers/configdb.js';
 import login from './routes/login.js';
 import route from './routes/route.js';
 import post from './routes/post.js';
 dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('Verifying JWT_SECRET...');
 if (!process.env.JWTSECRET) {
@@ -27,6 +31,7 @@ app.use(cookieParser());
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/videos', express.static(path.join(__dirname, 'videos')));
 app.use(express.json());
+app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/login', login);
 app.use('/route', route);
 app.use('/post', post);

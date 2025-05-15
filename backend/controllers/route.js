@@ -56,44 +56,54 @@ const createRouteDB = async (routeDocument) => {
 
 
 export const getRoutes = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const sort = req.query.sort || 'likes';
-
-    const skip = (page - 1) * limit;
-
-    let sortOptions = {};
-    if (sort === 'recent') {
-      sortOptions = { _id: -1 };
-    } else {
-      sortOptions = { likes: -1 };
-    }
-
-    const projectionOptions = {
-      _id: 1,
-      title: 1,
-      images: 1,
-      likes: 1,
-    };
-
-    const routes = await findRoutes(
-      {},
-      {
-        sort: sortOptions,
-        skip: skip,
-        limit: limit,
-        projection: projectionOptions,
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const sort = req.query.sort || 'likes';
+  
+      const skip = (page - 1) * limit;
+  
+      let sortOptions = {};
+      if (sort === 'recent') {
+        sortOptions = { _id: -1 };
+      } else {
+        sortOptions = { likes: -1 };
       }
-    );
-
-    res.status(200).json(routes);
-
-  } catch (error) {
-    console.error('Error in getRoutes controller:', error);
-    res.status(500).json({ message: 'Internal server error fetching routes.' });
-  }
-};
+  
+      const projectionOptions = {
+        _id: 1,
+        title: 1,
+        images: 1,
+        likes: 1,
+          climbType: 1,
+          difficultyLevel: 1,
+          description: 1,
+          latitude: 1,
+          longitude: 1,
+          creatorId: 1
+      };
+  
+      const routes = await findRoutes(
+        {},
+        {
+          sort: sortOptions,
+          skip: skip,
+          limit: limit,
+          projection: projectionOptions,
+        }
+      );
+  
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+  
+      res.status(200).json(routes);
+  
+    } catch (error) {
+      console.error('Error in getRoutes controller:', error);
+      res.status(500).json({ message: 'Internal server error fetching routes.' });
+    }
+  };
 
 
 export const createRoute = async (req, res) => {
@@ -105,12 +115,11 @@ export const createRoute = async (req, res) => {
             description,
             difficultyLevel,
             climbType,
-            geoLocation,
-            accessCost,
-            recommendedGear,
+            latitude,
+            longitude
         } = req.body;
 
-        if (!title || !description || !difficultyLevel || !climbType || !geoLocation) {
+        if (!title || !description || !difficultyLevel || !climbType || !latitude || !longitude) {
              return res.status(400).json({ message: 'Missing required route fields (title, description, difficultyLevel, climbType, geoLocation).' });
         }
 
@@ -131,9 +140,8 @@ export const createRoute = async (req, res) => {
             description,
             difficultyLevel,
             climbType,
-            geoLocation,
-            accessCost: accessCost !== undefined ? accessCost : 0,
-            recommendedGear: recommendedGear || '',
+            latitude,
+            longitude,
             images: imageUrls,
             videos: videoUrls,
             creatorId: new ObjectId(creatorId),
@@ -258,6 +266,8 @@ export const deleteRoute = async (req, res) => {
         res.status(500).json({ message: 'Internal server error during route deletion.' });
     }
 };
+
+
 export const getRouteById = async (req, res) => {
   try {
       const routeId = req.params.id;
@@ -432,10 +442,9 @@ const EDITABLE_ROUTE_FIELDS = [
     'title',
     'description',
     'difficultyLevel',
-    'geoLocation',
-    'accessCost',
-    'climbType',
-    'recommendedGear',
+    'latitude',
+    'longitude',
+    'climbType'
 ];
 
 const updateRouteDB = async (routeId, updateOperators) => {

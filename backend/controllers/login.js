@@ -64,15 +64,20 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    const identifier = req.query.emailOrUsername;
-    const password = req.query.password;
+    // The request method is now POST
+
+    // --- Read identifier and password from req.body ---
+    const { identifier, password } = req.body;
+    // ---------------------------------------------------
 
     if (!identifier || !password) {
-       return res.status(400).json({ message: 'Missing required fields (identifier, password).' });
+       return res.status(400).json({ message: 'Missing required fields (identifier, password) in request body.' });
     }
-    const db = getDatabase();
+    // ... rest of the logic (finding user, comparing password, generating tokens) ...
+
+    const db = getDatabase(); // Ensure these are correctly scoped/available
     const usersCollection = db.collection(USERSCOLLECTION);
-    const refreshTokensCollection = db.collection('refreshTokens');
+    const refreshTokensCollection = db.collection(REFRESHTOKENSCOLLECTION); // Ensure this variable is defined
 
     const user = await usersCollection.findOne({
       $or: [
@@ -91,25 +96,32 @@ export const loginUser = async (req, res) => {
        return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
+    // ... JWT and Refresh Token generation ...
     const payload = {
       userId: user._id,
       username: user.username
     };
 
-    if (!JWTSECRET) {
-        console.error("JWTSECRET is not defined in loginUser function scope.");
-        return res.status(500).json({ message: 'Server configuration error.' });
+    // Make sure JWTSECRET is accessible in this scope
+    if (!process.env.JWTSECRET) { // Check process.env.JWTSECRET directly
+        console.error("JWTSECRET environment variable is not set.");
+        return res.status(500).json({ message: 'Server configuration error: JWT secret not set.' });
     }
+     const JWTSECRET = process.env.JWTSECRET; // Ensure JWTSECRET is defined in this scope
 
-    const token = jwt.sign(payload, JWTSECRET, { expiresIn: '1h' });
+    const token = jwt.sign(payload, JWTSECRET, { expiresIn: 3600 }); // MaxAge 1 hour = 3600 seconds
+
     const cookieOptions = {
         httpOnly: true,
-        maxAge: 3600 * 1000,
-        path: '/'
-    }
-    res.cookie('token', token, cookieOptions);
+        maxAge: 3600 * 1000, // Max-Age in milliseconds (1 hour)
+        // Add Secure=true if using HTTPS
+        // Add SameSite=Lax (or Strict) for better security
+        // secure: process.env.NODE_ENV === 'production', // Only set secure in production with HTTPS
+        // sameSite: 'Lax' // Or 'Strict'
+    };
+    res.cookie('token', token, cookieOptions); // Set the token cookie
 
-    const refreshTokenExpiresInSeconds = 7 * 24 * 60 * 60;
+    const refreshTokenExpiresInSeconds = 604800; // 7 days
     const refreshToken = crypto.randomBytes(32).toString('hex');
 
     const refreshTokenDocument = {
@@ -119,22 +131,26 @@ export const loginUser = async (req, res) => {
         expiresAt: new Date(Date.now() + refreshTokenExpiresInSeconds * 1000)
     };
 
-    if (!refreshTokensCollection) {
-         console.error("refreshTokensCollection is not defined in loginUser function scope.");
-          return res.status(500).json({ message: 'Server configuration error (refresh tokens).' });
+    // Ensure refreshTokensCollection is a valid collection reference
+     if (!refreshTokensCollection) {
+         console.error("MongoDB refresh tokens collection reference is not valid.");
+          return res.status(500).json({ message: 'Server configuration error (refresh tokens collection).' });
     }
 
-    await refreshTokensCollection.deleteMany({ userId: user._id, expiresAt: { $lt: new Date() } });
+    // Delete old tokens for this user and insert the new one
+    await refreshTokensCollection.deleteMany({ userId: user._id }); // Consider deleting only expired or all for this user
     await refreshTokensCollection.insertOne(refreshTokenDocument);
 
     const refreshTokenCookieOptions = {
       httpOnly: true,
-      maxAge: refreshTokenExpiresInSeconds * 1000,
-      path: '/login/refresh',
+      maxAge: refreshTokenExpiresInSeconds * 1000, // Max-Age in milliseconds (7 days)
+      // secure: process.env.NODE_ENV === 'production', // Only set secure in production with HTTPS
+      // sameSite: 'Lax' // Or 'Strict'
     };
 
-    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
+    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions); // Set the refresh token cookie
 
+    // Send success response (do not send token in body if using HttpOnly cookies)
     res.status(200).json({
       message: 'Login successful.',
       userId: user._id,
@@ -184,9 +200,9 @@ export const refreshToken = async (req, res) => {
       };
 
       const jwtExpiresInSeconds = 1 * 60 * 60;
-      const token = jwt.sign(jwtPayload, JWTSECRET, { expiresIn: jwtExpiresInSeconds });
+      const token = jwt.sign(jwtPayload, JWTSECRET, { expiresIn: 3600 });
 
-      const refreshTokenExpiresInSeconds = 7 * 24 * 60 * 60;
+      const refreshTokenExpiresInSeconds = 604800;
       const newRefreshToken = crypto.randomBytes(32).toString('hex');
 
       const newRefreshTokenDocument = {
@@ -199,14 +215,12 @@ export const refreshToken = async (req, res) => {
 
       const accessTokenCookieOptions = {
         httpOnly: true,
-        path: '/',
-        maxAge: jwtExpiresInSeconds * 1000,
+        maxAge: 3600000,
       };
 
        const refreshTokenCookieOptions = {
         httpOnly: true,
-        path: '/login/refresh',
-        maxAge: refreshTokenExpiresInSeconds * 1000,
+        maxAge: 604800 * 1000,
       };
 
 
