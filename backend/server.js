@@ -8,6 +8,7 @@ import { connectToDatabase } from './controllers/configdb.js';
 import login from './routes/login.js';
 import route from './routes/route.js';
 import post from './routes/post.js';
+import community from './routes/community.js';
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +35,7 @@ app.use(express.json());
 app.use('/login', login);
 app.use('/route', route);
 app.use('/post', post);
+app.use('/community', community);
 connectToDatabase()
   .then(() => {
     console.log('Database connection established. Starting server...');
