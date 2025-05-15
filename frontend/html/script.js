@@ -185,56 +185,43 @@ function initializeHomeView() {
              console.error("Posts container not found in Home View for fetching!");
              return;
          }
-        // Display a loading message in the feed area
         postsContainer.innerHTML = '<p class="text-center text-gray-500">Loading posts...</p>';
 
-        // --- Get token from sessionStorage ---
-        const accessToken = sessionStorage.getItem('accessToken'); // Or localStorage
+        // const accessToken = sessionStorage.getItem('accessToken');
 
-        if (!accessToken) {
-            // User is not logged in - display message and redirect to login
-             console.log('No access token found. User must be logged in to view the feed.');
-             postsContainer.innerHTML = '<p class="text-red-500 text-center">You must be logged in to view the feed.</p>';
-             // Delay alert and redirect slightly to allow message to be seen
-             setTimeout(() => {
-                 alert('You must be logged in to view the feed.');
-                 window.location.href = 'login.html'; // Redirect to your login page
-             }, 100); // Add a small delay
-            return; // Stop fetching
-        }
-        // -------------------------------------
+        // if (!accessToken) {
+        //      console.log('No access token found. User must be logged in to view the feed.');
+        //      postsContainer.innerHTML = '<p class="text-red-500 text-center">You must be logged in to view the feed.</p>';
+        //      setTimeout(() => {
+        //          alert('You must be logged in to view the feed.');
+        //          window.location.href = 'login.html';
+        //      }, 100);
+        //     return;
+        // }
 
         try {
-            // !!! IMPORTANT !!! Update this URL to match your backend GET posts endpoint
-            const backendPostsUrl = 'http://localhost:3000/api/posts'; // Example URL from your router
+            const backendPostsUrl = 'http://localhost:3000/posts/';
 
             const response = await fetch(backendPostsUrl, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    // --- Add Authorization header for authentication ---
-                    'Authorization': `Bearer ${accessToken}`
-                    // -------------------------------
                 },
-                // credentials: 'include' // Likely still needed if refresh token is HttpOnly cookie
+                credentials: 'include'
             });
 
-            if (response.ok) { // Status 200-299 is OK
+            if (response.ok) {
                 const posts = await response.json();
                 console.log('Fetched posts:', posts);
-                renderPosts(posts); // Call the function to display the posts
+                renderPosts(posts);
             } else if (response.status === 401) {
-                // --- Handle 401: Token expired or invalid ---
                 console.error('Authentication failed fetching posts. Token expired or invalid.');
-                sessionStorage.removeItem('accessToken'); // Clear the invalid token
                 postsContainer.innerHTML = '<p class="text-red-500 text-center">Session expired. Please log in again.</p>';
                  setTimeout(() => {
                      alert('Session expired. Please log in again.');
-                     window.location.href = 'login.html'; // Redirect
+                     window.location.href = 'login.html';
                  }, 100);
-                // -------------------------------------------
             } else {
-                // Handle other API errors
                 const errorData = await response.json().catch(() => ({ message: 'Unknown error fetching posts.' }));
                  console.error('Failed to fetch posts:', response.status, errorData);
                  postsContainer.innerHTML = `<p class="text-red-500 text-center">Error loading posts: ${errorData.message || 'Could not fetch posts.'}</p>`;
@@ -251,19 +238,16 @@ function initializeHomeView() {
              console.error("Posts container not found for rendering in Home View!");
              return;
          }
-        // Clear loading message and any previous hardcoded posts
         postsContainer.innerHTML = '';
 
-        // If no posts are returned, display a message
         if (!posts || posts.length === 0) {
             postsContainer.innerHTML = '<p class="text-gray-500 text-center">No posts yet. Be the first to share your climbing experience!</p>';
             return;
         }
 
-        // Loop through the posts array and create HTML for each post
         posts.forEach(post => {
              const postElement = document.createElement('div');
-             postElement.classList.add('bg-white', 'rounded-lg', 'shadow-md'); // Add styling classes
+             postElement.classList.add('bg-white', 'rounded-lg', 'shadow-md');
 
              // --- Format the date (Optional: implement robust date formatting) ---
              let formattedDate = post.date ? new Date(post.date).toLocaleString() : 'Unknown date';
@@ -281,8 +265,6 @@ function initializeHomeView() {
                     formattedDate = `${diffDays} days ago`;
                 }
              }
-             // ------------------------------------------------------------------
-
 
              // --- Get Image URL ---
              // The backend post projection includes 'photo'. Ensure this is the public URL path.

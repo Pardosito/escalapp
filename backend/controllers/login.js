@@ -248,7 +248,6 @@ export const verifyJWT = (req, res, next) => {
             return res.status(401).json({ message: 'Invalid or expired access token.' });
         }
 
-        
         req.user = decoded;
         next();
     });
