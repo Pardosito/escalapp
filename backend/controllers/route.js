@@ -530,3 +530,163 @@ export const updateRoute = async (req, res) => {
         res.status(500).json({ message: 'Internal server error during route update.' });
     }
 };
+export const unlikeRoute = async (req, res) => {
+    try {
+        const routeId = req.params.id;
+
+         if (!ObjectId.isValid(routeId)) {
+            return res.status(400).json({ message: 'Invalid route ID format.' });
+        }
+
+        const userId = req.user.userId;
+
+         if (!ObjectId.isValid(userId)) {
+            return res.status(401).json({ message: 'Invalid user ID in token.' });
+        }
+
+        const result = await handleRouteLikeDB(userId, routeId, false);
+
+        if (result && result.likedStateChanged) {
+             res.status(200).json({ message: 'Route unliked successfully.' });
+        } else {
+             res.status(200).json({ message: 'Route was not liked by this user.' });
+        }
+
+    } catch (error) {
+        console.error('Error in unlikeRoute controller:', error);
+         if (error.message.includes('Invalid user or route ID format.')) {
+             return res.status(400).json({ message: error.message });
+         }
+        res.status(500).json({ message: 'Internal server error during unlike operation.' });
+    }
+};
+const USER_CLIMBED_ROUTES_COLLECTION = 'userclimbedroutes';
+
+const handleRouteCompletionDB = async (userId, routeId, action) => {
+    try {
+        const db = getDatabase();
+        const routesCollection = db.collection(ROUTES_COLLECTION);
+        const userClimbedRoutesCollection = db.collection(USER_CLIMBED_ROUTES_COLLECTION);
+
+        const userObjectId = new ObjectId(userId);
+        const routeObjectId = new ObjectId(routeId);
+        const currentTime = new Date();
+        const undoWindowMilliseconds = 10 * 60 * 1000;
+
+        if (action === 'complete') {
+            const alreadyCompleted = await userClimbedRoutesCollection.findOne(
+                 { userId: userObjectId, 'climbedRoutes.routeId': routeObjectId }
+            );
+
+            if (alreadyCompleted) {
+                 return { status: 'conflict', message: 'Route already marked as completed by this user.' };
+            }
+
+            await userClimbedRoutesCollection.updateOne(
+                { userId: userObjectId },
+                {
+                    $push: {
+                        climbedRoutes: {
+                            routeId: routeObjectId,
+                            completedAt: currentTime
+                        }
+                    }
+                },
+                { upsert: true }
+            );
+
+            await routesCollection.updateOne(
+                { _id: routeObjectId },
+                { $inc: { climbedCount: 1 } }
+            );
+
+            return { status: 'success', action: 'complete' };
+
+        } else if (action === 'undo') {
+            const userClimb = await userClimbedRoutesCollection.findOne(
+                 { userId: userObjectId, 'climbedRoutes.routeId': routeObjectId }
+                 , { projection: { climbedRoutes: 1 } }
+            );
+
+            if (!userClimb || !Array.isArray(userClimb.climbedRoutes)) {
+                 return { status: 'notfound', message: 'Completion record not found for this route and user.' };
+            }
+
+            const completionEntry = userClimb.climbedRoutes.find(entry => entry.routeId.equals(routeObjectId));
+
+            if (!completionEntry) {
+                 return { status: 'notfound', message: 'Completion record not found for this route and user.' };
+            }
+
+            const completedAt = completionEntry.completedAt;
+            const timeDifference = currentTime.getTime() - completedAt.getTime();
+
+            if (timeDifference > undoWindowMilliseconds) {
+                 return { status: 'forbidden', message: 'Undo window (10 minutes) has expired.' };
+            }
+
+            await userClimbedRoutesCollection.updateOne(
+                { userId: userObjectId },
+                { $pull: { climbedRoutes: { routeId: routeObjectId } } }
+            );
+
+            await routesCollection.updateOne(
+                { _id: routeObjectId },
+                { $inc: { climbedCount: -1 } }
+            );
+
+            return { status: 'success', action: 'undo' };
+
+        } else {
+             return { status: 'badrequest', message: 'Invalid action specified (use "complete" or "undo").' };
+        }
+
+    } catch (error) {
+        console.error('Error in handleRouteCompletionDB:', error);
+         if (error.message.includes('ObjectId')) {
+             throw new Error('Invalid user or route ID format.');
+         }
+        throw error;
+    }
+};
+
+export const handleRouteCompletion = async (req, res) => {
+    try {
+        const routeId = req.params.id;
+        const userId = req.user.userId;
+
+         if (!ObjectId.isValid(routeId)) {
+            return res.status(400).json({ message: 'Invalid route ID format.' });
+        }
+         if (!ObjectId.isValid(userId)) {
+            return res.status(401).json({ message: 'Invalid user ID in token.' });
+        }
+
+        const action = req.body.action;
+
+        const result = await handleRouteCompletionDB(userId, routeId, action);
+
+        if (result.status === 'success') {
+            res.status(200).json({ message: `Route marked as ${result.action} successfully.` });
+        } else if (result.status === 'conflict') {
+            res.status(409).json({ message: result.message });
+        } else if (result.status === 'notfound') {
+             res.status(404).json({ message: result.message });
+        } else if (result.status === 'forbidden') {
+            res.status(403).json({ message: result.message });
+        } else if (result.status === 'badrequest') {
+             res.status(400).json({ message: result.message });
+        } else {
+             console.error('Unexpected result status from handleRouteCompletionDB:', result);
+             res.status(500).json({ message: 'Internal server error processing completion.' });
+        }
+
+
+    } catch (error) {
+        console.error('Error in handleRouteCompletion controller:', error);
+         if (error.message.includes('ObjectId')) {
+             return res.status(400).json({ message: error.message });
+         }
+        res.status(500).json({ message: 'Internal server error during completion operation.' });
+    }
+};
