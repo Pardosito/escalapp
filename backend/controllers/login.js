@@ -98,14 +98,13 @@ export const loginUser = async (req, res) => {
 
     if (!JWTSECRET) {
         console.error("JWTSECRET is not defined in loginUser function scope.");
-         return res.status(500).json({ message: 'Server configuration error.' });
+        return res.status(500).json({ message: 'Server configuration error.' });
     }
 
     const token = jwt.sign(payload, JWTSECRET, { expiresIn: '1h' });
     const cookieOptions = {
         httpOnly: true,
         maxAge: 3600 * 1000,
-        sameSite: 'Lax',
         path: '/'
     }
     res.cookie('token', token, cookieOptions);
@@ -131,7 +130,6 @@ export const loginUser = async (req, res) => {
     const refreshTokenCookieOptions = {
       httpOnly: true,
       maxAge: refreshTokenExpiresInSeconds * 1000,
-      sameSite: 'Lax',
       path: '/login/refresh',
     };
 
@@ -203,14 +201,12 @@ export const refreshToken = async (req, res) => {
         httpOnly: true,
         path: '/',
         maxAge: jwtExpiresInSeconds * 1000,
-        sameSite: 'Lax',
       };
 
        const refreshTokenCookieOptions = {
         httpOnly: true,
         path: '/login/refresh',
         maxAge: refreshTokenExpiresInSeconds * 1000,
-        sameSite: 'Lax',
       };
 
 
