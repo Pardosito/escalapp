@@ -31,7 +31,6 @@ app.use(cookieParser());
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/videos', express.static(path.join(__dirname, 'videos')));
 app.use(express.json());
-app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/login', login);
 app.use('/route', route);
 app.use('/post', post);

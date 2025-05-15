@@ -155,11 +155,7 @@ async function fetchAndInjectPartial(htmlFileName, targetElementId, targetContai
 }
 
 
-// This code goes into your script.js file
 
-// ... (Keep your existing switchViews function and other helper functions) ...
-
-// --- Initialization Function for the Home View ---
 function initializeHomeView() {
     console.log("Initializing Home View...");
 
@@ -187,20 +183,8 @@ function initializeHomeView() {
          }
         postsContainer.innerHTML = '<p class="text-center text-gray-500">Loading posts...</p>';
 
-        // const accessToken = sessionStorage.getItem('accessToken');
-
-        // if (!accessToken) {
-        //      console.log('No access token found. User must be logged in to view the feed.');
-        //      postsContainer.innerHTML = '<p class="text-red-500 text-center">You must be logged in to view the feed.</p>';
-        //      setTimeout(() => {
-        //          alert('You must be logged in to view the feed.');
-        //          window.location.href = 'login.html';
-        //      }, 100);
-        //     return;
-        // }
-
         try {
-            const backendPostsUrl = 'http://localhost:3000/posts/';
+            const backendPostsUrl = 'http://localhost:3000/post/';
 
             const response = await fetch(backendPostsUrl, {
                 method: 'GET',
@@ -266,11 +250,12 @@ function initializeHomeView() {
                 }
              }
 
-             // --- Get Image URL ---
-             // The backend post projection includes 'photo'. Ensure this is the public URL path.
-             const postImageUrl = (post.photo)
-                               ? post.photo // Assuming backend saves/sends the public URL path
-                               : null; // Or a placeholder if no photo
+             const relativeImagePath = post.photo; // Assuming post.photo stores the relative path
+
+        // --- Construct the full, publicly accessible image URL ---
+        const postImageUrl = relativeImagePath
+                           ? `http://localhost:3000/images/${relativeImagePath}` // Prepend backend URL + static path
+                           : null;
 
 
              // --- Get User Info (Requires backend to join/lookup user data) ---
@@ -476,20 +461,27 @@ function initializeHomeView() {
 
 
 
-    if (!postsContainer) {
-         console.error("Posts container (#homeBody .space-y-6) not found in Home View!");
-         if (postCreationArea) postCreationArea.style.display = 'none';
-         fetchPosts();
-         return;
-    }
+   if (!postCreationArea) {
+    console.error("Post creation area (#postCreationArea) not found in Home View! Disabling post creation functionality."); // Update error message
+    // Hide the tabs or the entire section if the creation area container is missing
+    // (Optional: add an ID to the tabs div if you want to hide it easily)
+    const homeTabContent = document.querySelector('#homeBody > div.flex.mb-6'); // Example selector for the tabs div
+    if (homeTabContent) homeTabContent.style.display = 'none'; // Example: Hide the tabs section
+    // Still proceed to fetch posts if the postsContainer was found
+    fetchPosts(); // Call fetchPosts to load the feed
+    return; // Stop initialization of post creation logic
+}
 
-    if (!postCreationArea || !postTextarea || !postPhotoButton || !postImageUploadInput || !postImagePreview || !postFileSelectedName || !postLocationButton || !postLocationStatusSpan || !postGeoLatitudeInput || !postGeoLongitudeInput || !createPostButton) {
-        console.error("Some required elements for Home View post creation not found!");
-        if(postCreationArea) postCreationArea.style.display = 'none';
-
-        fetchPosts();
-        return;
-    }
+// Now check the individual elements *within* the postCreationArea, but only if postCreationArea was found
+// This check ensures all required sub-elements are present
+if (!postTextarea || !postPhotoButton || !postImageUploadInput || !postImagePreview || !postFileSelectedName || !postLocationButton || !postLocationStatusSpan || !postGeoLatitudeInput || !postGeoLongitudeInput || !createPostButton) {
+    console.error("Some required elements *within* the post creation area were not found! Disabling post creation functionality."); // Update error message
+    // Hide the entire post creation area if its internal elements are missing
+    postCreationArea.style.display = 'none';
+    // Still proceed to fetch posts if the postsContainer was found
+    fetchPosts(); // Call fetchPosts to load the feed
+    return; // Stop initialization of post creation logic
+}
 
 
 
@@ -615,37 +607,6 @@ function initializeHomeView() {
 }
 
 
-// ... (Keep your other functions like switchViews, initializeSettingsView, switchTab, toggleDeleteDialog, fetchAndInjectPartial) ...
-
-// Ensure the 'home' case in switchViews calls initializeHomeView
-/*
-async function switchViews(view, id = null) { // Ensure switchViews accepts id
-    // ...
-    case "home":
-        htmlFileName = "index.html";
-        targetElementId = "homeBody";
-        initializationFunction = initializeHomeView; // Set the init function
-        break;
-    // ...
-     if (initializationFunction) {
-        // If the init function needs the ID (like for single route), pass it
-        // For home view, it doesn't need the ID
-         if (view === 'singleRoute') {
-             initializationFunction(id); // Pass ID for singleRoute
-         } else {
-             initializationFunction(); // Call without ID for other views like home
-         }
-     }
-    // ...
-}
-*/
-
-// ... (Keep your DOMContentLoaded listener) ...
-
-
-
-// --- Initialization Function for the Settings View ---
-// This function contains the logic for the logout button specifically
 function initializeSettingsView() {
     console.log("Initializing Settings View...");
     const logoutButton = document.getElementById('logoutButton');
@@ -705,7 +666,6 @@ function initializeSettingsView() {
 }
 
 
-// --- Keep your other functions ---
 function switchTab(tabValue) {
     // Logic to switch tabs within a view (like settings)
     document.querySelectorAll('[data-tab-content]').forEach(content => {
@@ -741,7 +701,6 @@ const dialog = document.getElementById('delete-dialog');
 }
 
 
-// --- Handle the initial view load when the page loads ---
 document.addEventListener('DOMContentLoaded', () => {
     // Determine the initial view to load. Could be 'home' by default.
     // Or you could check the URL hash (e.g., #settings) to load a specific view on page load.
@@ -749,14 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
     switchViews(initialView); // Load the initial view
 });
 
-// --- Helper function to fetch and inject partial HTML ---
-// This is used by the specific cases like 'ascents', 'saved', etc.
-// It's refactored to handle potential target container issues and accept init functions
-/* The switchViews cases for 'ascents', 'saved', etc. already use this pattern,
-   but I've kept the refactored helper function signature consistent with the main switchViews calls.
-   You might need to adjust how targetContainer is found if IDs like profileFeed/userFeed
-   are not always present in the base HTML or are nested differently.
-*/
 async function fetchAndInjectPartial(htmlFileName, targetElementId, targetContainer, initializationFunction = null) {
      if (!targetContainer) {
          console.error(`Target container not found for ${htmlFileName}`);
@@ -1020,8 +971,13 @@ function initializeRoutesView() {
         routes.forEach(route => {
             const routeElement = document.createElement('div');
             routeElement.classList.add('bg-white', 'border', 'border-gray-200', 'rounded-lg', 'shadow-md', 'overflow-hidden');
+            const relativeImagePath = (route.images && Array.isArray(route.images) && route.images.length > 0)
+                                 ? route.images[0]
+                                 : null;
 
-            const imageUrl = route.images && route.images.length > 0 ? route.images[0] : 'https://d3byf4kaqtov0k.cloudfront.net/p/news/syxpy5yl.webp';
+            const imageUrl = relativeImagePath
+                       ? `http://localhost:3000/images/${relativeImagePath}` // Prepend backend URL + static path
+                       : 'https://via.placeholder.com/600x400?text=No+Image';
 
             routeElement.innerHTML = `
                 <img src="${imageUrl}" alt="${route.title || 'Climbing Route'}" class="w-full h-48 object-cover">
@@ -1200,23 +1156,22 @@ function initializeSingleRouteView(routeId) {
         }
     };
 
-    // --- Function to Render Route Details into the HTML ---
     const renderRouteDetails = (route) => {
-        // Populate the HTML elements with data from the fetched route object
 
-        // Title
         if (singleRouteTitle) singleRouteTitle.textContent = route.title || 'Untitled Route';
 
-        // Image (use the first image URL if available)
         if (singleRouteImage) {
-            const imageUrl = (route.images && Array.isArray(route.images) && route.images.length > 0)
-                             ? route.images[0]
-                             : 'https://via.placeholder.com/800x400?text=No+Image';
+            const relativeImagePath = (route.images && Array.isArray(route.images) && route.images.length > 0)
+                                  ? route.images[0]
+                                  : null;
+
+        const imageUrl = relativeImagePath
+                       ? `http://localhost:3000/images/${relativeImagePath}`
+                       : 'https://via.placeholder.com/800x400?text=No+Image';
             singleRouteImage.src = imageUrl;
             singleRouteImage.alt = route.title || 'Climbing Route';
         }
 
-        // Location (using latitude/longitude from the GET /route/:id projection)
         if (singleRouteLocation) {
              if (route.latitude !== undefined && route.longitude !== undefined) {
                  singleRouteLocation.textContent = `Coordinates: ${parseFloat(route.latitude).toFixed(4)}, ${parseFloat(route.longitude).toFixed(4)}`;
@@ -1400,20 +1355,7 @@ function initializeSingleRouteView(routeId) {
         }
     };
 
-    // ======================================================= //
-    // End of Helper Functions specific to Single Route View //
-    // ======================================================= //
-
-
-    // --- Initial Fetch for Single Route View ---
-    // Call fetchRouteDetails with the route ID when the view is initialized
     fetchRouteDetails(routeId);
-
-    // Optional: Handle the back button within this function if its behavior needs to be dynamic
-    // const backButton = document.querySelector('.back-button'); // Get back button by class or ID
-    // if (backButton) {
-    //     backButton.addEventListener('click', () => switchViews('routes'));
-    // }
 
     console.log("Single Route View initialization complete.");
 }
